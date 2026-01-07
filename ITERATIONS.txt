@@ -1,0 +1,30 @@
+Iterations
+==========
+
+Iteration 1
+-----------
+
+A single Civilization is instantiated at year zero with a random
+number of people, and an initial fertility and mortality rate. Over
+the course of 100 years, the population increases/decreases by those
+rates, and outputs the population for that year to the screen.
+
+Iteration 2
+-----------
+
+A random famine event causes a large, single year spike in deaths.
+Such an event, and the resultant death count, is output to the screen.
+
+Iteration 3
+-----------
+
+A ruler character is created at instantiation (just a number). They
+start at 21 years old and age until they die of old age (randomly
+determined by actuarial table).
+
+In short
+--------
+
+- Family trees for characters, marriage, children
+- Succession for rulers
+- Founding of new settlement
