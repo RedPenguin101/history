@@ -52,14 +52,10 @@ new_civ :: proc() -> Civilization
 	pop_max :: 50000
 	init_pop := rand.int_range(pop_min, pop_max)
 
-	ruler := Character { idx = len(characters_global), age = 21, alive = true }
-	append(&characters_global, ruler)
-
 	return {
 		population = init_pop,
 		birth_rate = 37.0/1000.0,
 		death_rate = 37.0/1000.0,
-		ruler_idx  = ruler.idx,
 	}
 }
 
@@ -69,7 +65,7 @@ civ_plus_1_year :: proc(c:^Civilization, year:int)
 	// 4% chance of famine
 	if dice_roll < 4
 	{
-		pop_killed := int(rand.float32_range(0.05, 0.3) * f32(c.population))
+		pop_killed := int(rand.float32_range(0.01, 0.05) * f32(c.population))
 		famine := CivEvent{type=.Famine, year=year, int1=pop_killed}
 		append(&c.event_history[year], famine)
 		c.population -= pop_killed
@@ -112,6 +108,9 @@ main :: proc()
 
 	append(&characters_global, Character{}) // Null character
 	civ := new_civ()
+	ruler_sex := rand.int_range(1,3)
+	ruler_idx := create_character(21, ruler_sex, 0, 0)
+	civ.ruler_idx = ruler_idx
 
 	defer {
 		for events in civ.event_history {

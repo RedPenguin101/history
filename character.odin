@@ -19,7 +19,6 @@ Character :: struct
 	alive : bool,
 	sex   : int,
 	spouse, mother, father: int,
-	children : [dynamic]int,
 	attributes : bit_set[CharacterAttribute],
 }
 
@@ -27,12 +26,14 @@ CharacterEventType :: enum
 {
 	Marriage,
 	Death,
+	Birth,
 }
 
 CharacterEvent :: struct
 {
 	type:CharacterEventType,
-	char1, char2: int,
+	char1, char2, char3: int,
+	int1: int,
 	year, day: int,
 }
 
@@ -43,7 +44,12 @@ character_event_description :: proc(ce:CharacterEvent) -> string
 			return tprintf("%d died at age %d.", ce.char1, characters_global[ce.char1].age)
 		}
 		case .Marriage: {
+			assert(ce.char1 != 0)
 			return tprintf("%d and %d got married.", ce.char1, ce.char2)
+		}
+		case .Birth: {
+			sex := "boy" if ce.int1 == male else "girl"
+			return tprintf("%d and %d had a baby %s, %d.", ce.char2, ce.char3, sex, ce.char1)
 		}
 	}
 	panic("unreachable")
@@ -63,6 +69,7 @@ create_character :: proc(age, sex, mother, father:int) -> int
 		mother = mother,
 		father = father,
 	}
+	DEBUG("created", char)
 	append(&characters_global, char)
 	return idx
 }
@@ -98,21 +105,26 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 {
 	event_start := len(character_events_global)
 	// Represents a single iterations. Probably there will be one allowed act per day, or 28*12=336 per year
-	for &char, i in characters_global
+	for char, i in characters_global
 	{
 		if char.idx == 0 || !char.alive do continue
 
-		if .IsMarried not_in char.attributes && char.age < FERTILITY_END
+		if .IsMarried not_in char.attributes && char.age >= FERTILITY_START && char.age < FERTILITY_END
 		{
+			DEBUG("1: marriage for i=", i, "char=", char)
 			new_spouse_idx := find_or_create_suitable_mate(char)
 			assert(new_spouse_idx > 0)
 
-			char.attributes += {.IsMarried}
-			char.spouse = new_spouse_idx
+			// Mutations are done separately because we're potentially creating characters as part of this.
+			// So the pointers can get messed up if there's a realloc
 
-			new_spouse := &characters_global[new_spouse_idx]
-			new_spouse.attributes += {.IsMarried}
-			new_spouse.spouse = char.idx
+			characters_global[i].attributes += {.IsMarried}
+			characters_global[i].spouse = new_spouse_idx
+
+			DEBUG("2: marriage for i=", i, "char=", char)
+
+			characters_global[new_spouse_idx].attributes += {.IsMarried}
+			characters_global[new_spouse_idx].spouse = char.idx
 
 			event := CharacterEvent{
 				type = .Marriage,
@@ -126,14 +138,43 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 
 		if day_of_year == 0
 		{
-			char.age += 1
+			characters_global[i].age += 1
+
+			// Determine if the character has children this year.
+			// There's a 10% chance whenever both partners in a
+			// marriage are fertile
+
+			if char.sex == female && .IsMarried in char.attributes && char.age >= FERTILITY_START && char.age < FERTILITY_END
+			{
+				husband := characters_global[char.spouse]
+				if husband.age >= FERTILITY_START && husband.age < FERTILITY_END {
+					roll := rand.float32()
+					if roll < 0.1 {
+						sex := rand.int_range(1, 3)
+						baby_idx := create_character(0, sex, char.idx, husband.idx)
+						created := characters_global[baby_idx]
+						assert(created.idx != 0)
+						event := CharacterEvent{
+							type = .Birth,
+							char1 = baby_idx,
+							char2 = char.idx,
+							char3 = husband.idx,
+							int1  = sex,
+							year = year,
+							day = day_of_year,
+						}
+						append(&character_events_global, event)
+					}
+				}
+			}
+
 			// Determine if character dies this year
 			assert(char.age < len(DEATH_RATE))
 			death_prob := DEATH_RATE[char.age]
 			roll := rand.float32()
 			if roll < death_prob
 			{
-				char.alive = false
+				characters_global[i].alive = false
 				if .IsMarried in char.attributes {
 					spouse := &characters_global[char.spouse]
 					spouse.spouse = 0

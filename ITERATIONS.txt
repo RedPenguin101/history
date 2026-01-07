@@ -30,6 +30,14 @@ The ruler character can get married and have children.
 In short
 --------
 
+- Character Names
 - Family trees for characters, marriage, children
 - Succession for rulers
-- Founding of new settlement
+- Elite families
+- Religions and priestly casts
+- Multiple civilizations
+
+Small Changes
+-------------
+
+- Different birth / death rates for males and females.
