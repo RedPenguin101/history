@@ -22,6 +22,11 @@ A ruler character is created at instantiation (just a number). They
 start at 21 years old and age until they die of old age (randomly
 determined by actuarial table).
 
+Iteration 4
+-----------
+
+The ruler character can get married and have children.
+
 In short
 --------
 

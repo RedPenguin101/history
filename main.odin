@@ -3,11 +3,15 @@ package history
 import "core:fmt"
 printfln :: fmt.printfln
 tprintf :: fmt.tprintf
+import "core:mem"
+import "core:log"
+DEBUG :: log.debug
 
 import "core:math/rand"
 import "core:strings"
 
 SIM_YEARS :: 100
+DAYS_IN_YEAR :: 336
 
 CivEventType :: enum
 { Famine, RulerDies }
@@ -20,7 +24,7 @@ CivEvent :: struct
 	int2   : int,
 }
 
-event_description :: proc(ce:CivEvent) -> string
+civ_event_description :: proc(ce:CivEvent) -> string
 {
 	switch ce.type {
 		case .Famine: {
@@ -42,15 +46,6 @@ Civilization :: struct
 	ruler_idx		: int,
 }
 
-Character :: struct
-{
-	idx   : int,
-	age   : int,
-	alive : bool,
-}
-
-characters_global : [dynamic]Character
-
 new_civ :: proc() -> Civilization
 {
 	pop_min :: 10000
@@ -70,21 +65,6 @@ new_civ :: proc() -> Civilization
 
 civ_plus_1_year :: proc(c:^Civilization, year:int)
 {
-	if c.ruler_idx > 0
-	{
-		ruler := &characters_global[c.ruler_idx]
-		assert(ruler.age < len(DEATH_RATE))
-		death_prob := DEATH_RATE[ruler.age]
-		roll := rand.float32()
-		if roll < death_prob
-		{
-			event := CivEvent{type=.RulerDies, year=year, int1=ruler.idx, int2=ruler.age}
-			append(&c.event_history[year], event)
-			ruler.alive = false
-			c.ruler_idx = 0
-		}
-	}
-
 	dice_roll := rand.int_max(100)
 	// 4% chance of famine
 	if dice_roll < 4
@@ -102,20 +82,56 @@ civ_plus_1_year :: proc(c:^Civilization, year:int)
 
 main :: proc()
 {
+	context.logger = log.create_console_logger()
+	context.logger.lowest_level = .Warning
+	defer log.destroy_console_logger(context.logger)
+
+	when ODIN_DEBUG {
+		context.logger.lowest_level = .Debug
+		track: mem.Tracking_Allocator
+		mem.tracking_allocator_init(&track, context.allocator)
+		context.allocator = mem.tracking_allocator(&track)
+
+		defer {
+			if len(track.allocation_map) > 0 {
+				for _, entry in track.allocation_map {
+					fmt.eprintf("%v leaked %v bytes\n", entry.location, entry.size)
+				}
+			}
+			if len(track.bad_free_array) > 0 {
+				for entry in track.bad_free_array {
+					fmt.eprintf("%v bad free at %v\n", entry.location, entry.memory)
+				}
+			}
+			mem.tracking_allocator_destroy(&track)
+		}
+	}
+
+	defer delete(characters_global)
+	defer delete(character_events_global)
+
 	append(&characters_global, Character{}) // Null character
 	civ := new_civ()
+
+	defer {
+		for events in civ.event_history {
+			delete(events)
+		}
+	}
 
 	printfln("Civ founded in year 0 with %d people, ruled by %d", civ.population, civ.ruler_idx)
 
 	for year in 0..<SIM_YEARS {
-		for &char in characters_global {
-			if char.alive do char.age += 1
+		for day in 0..<DAYS_IN_YEAR {
+			char_events := characters_sim_loop(year, day)
+			for ch_env in char_events {
+				printfln(" %v", character_event_description(ch_env))
+			}
 		}
-
 		civ_plus_1_year(&civ, year)
 		printfln("Year %d (%d):", year, civ.population)
 		for event in civ.event_history[year] {
-			printfln(" %v", event_description(event))
+			printfln(" %v", civ_event_description(event))
 		}
 	}
 }
