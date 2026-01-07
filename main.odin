@@ -3,11 +3,25 @@ package history
 import "core:fmt"
 printfln :: fmt.printfln
 
+import "core:math/rand"
+
 Civilization :: struct
 {
 	population  : int,
 	birth_rate	: f32,
 	death_rate	: f32,
+}
+
+new_civ :: proc() -> Civilization
+{
+	pop_min :: 10000
+	pop_max :: 50000
+	init_pop := rand.int_range(pop_min, pop_max)
+	return {
+		population = init_pop,
+		birth_rate = 37.0/1000.0,
+		death_rate = 37.0/1000.0,
+	}
 }
 
 civ_plus_1_year :: proc(c:Civilization) -> Civilization
@@ -21,11 +35,7 @@ civ_plus_1_year :: proc(c:Civilization) -> Civilization
 
 main :: proc()
 {
-	civ := Civilization {
-		population = 1000,
-		birth_rate = 37.0/1000.0,
-		death_rate = 27.0/1000.0,
-	}
+	civ := new_civ()
 
 	printfln("Civ founded in year 0 with %d people", civ.population)
 
