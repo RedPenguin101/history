@@ -25,49 +25,8 @@ Character :: struct
 	attributes : bit_set[CharacterAttribute],
 }
 
-CharacterEventType :: enum
-{
-	Marriage,
-	Death,
-	Birth,
-}
-
-CharacterEvent :: struct
-{
-	type:CharacterEventType,
-	char1, char2, char3: int,
-	int1: int,
-	year, day: int,
-}
-
-character_event_description :: proc(ce:CharacterEvent) -> string
-{
-	switch ce.type {
-		case .Death: {
-			return tprintf("%s %s died at age %d.",
-				characters_global[ce.char1].given_name, family_names[characters_global[ce.char1].family],
-				characters_global[ce.char1].age)
-		}
-		case .Marriage: {
-			assert(ce.char1 != 0)
-			return tprintf("%s %s and %s got married.",
-				characters_global[ce.char1].given_name, family_names[characters_global[ce.char1].family],
-				characters_global[ce.char2].given_name)
-		}
-		case .Birth: {
-			sex := "boy" if ce.int1 == male else "girl"
-			return tprintf("%s %s and %s had a baby %s, %s.",
-				characters_global[ce.char2].given_name, family_names[characters_global[ce.char2].family],
-				characters_global[ce.char3].given_name,
-				sex,
-				characters_global[ce.char1].given_name)
-		}
-	}
-	panic("unreachable")
-}
-
 characters_global : [dynamic]Character
-character_events_global : [dynamic]CharacterEvent
+character_events_global : [dynamic]Event
 family_names : [dynamic]string
 
 create_character :: proc(age, sex, mother, father:int, family:=0, name:string="") -> int
@@ -119,7 +78,7 @@ find_or_create_suitable_mate :: proc(this:Character) -> int
     return create_character(age, sex, 0, 0)
 }
 
-characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
+characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 {
 	event_start := len(character_events_global)
 	// Represents a single iterations. Probably there will be one allowed act per day, or 28*12=336 per year
@@ -155,7 +114,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 				}
 			}
 
-			event := CharacterEvent{
+			event := Event{
 				type = .Marriage,
 				char1 = char.idx,
 				char2 = new_spouse_idx,
@@ -183,7 +142,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 						baby_idx := create_character(0, sex, char.idx, husband.idx, family=char.family)
 						created := characters_global[baby_idx]
 						assert(created.idx != 0)
-						event := CharacterEvent{
+						event := Event{
 							type = .Birth,
 							char1 = baby_idx,
 							char2 = char.idx,
@@ -209,7 +168,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 					spouse.spouse = 0
 					spouse.attributes -= {.IsMarried}
 				}
-				event := CharacterEvent{
+				event := Event{
 					type = .Death,
 					char1 = char.idx,
 					year = year,

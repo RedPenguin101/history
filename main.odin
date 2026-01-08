@@ -72,13 +72,13 @@ main :: proc()
 			for day in 0..<DAYS_IN_YEAR {
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
-					printfln(" %v", character_event_description(ch_env))
+					printfln(" %v", event_description(ch_env))
 				}
 			}
 			civ_plus_1_year(&civ, year)
 			printfln("Year %d (%d):", year, civ.population)
 			for event in civ.event_history[year] {
-				printfln(" %v", civ_event_description(event))
+				printfln(" %v", event_description(event))
 			}
 		}
 	}

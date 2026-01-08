@@ -3,37 +3,12 @@ package history
 import "core:math/rand"
 import "core:strings"
 
-CivEventType :: enum
-{ Famine, RulerDies }
-
-CivEvent :: struct
-{
-	type   : CivEventType,
-	year   : int,
-	int1   : int,
-	int2   : int,
-}
-
-
-civ_event_description :: proc(ce:CivEvent) -> string
-{
-	switch ce.type {
-		case .Famine: {
-			return tprintf("Famine swept the land, killing %d people.", ce.int1)
-		}
-		case .RulerDies: {
-			return tprintf("The ruler, %d, died age %d.", ce.int1, ce.int2)
-		}
-	}
-	panic("unreachable")
-}
-
 Civilization :: struct
 {
 	population		: int,
 	birth_rate		: f32,
 	death_rate		: f32,
-	event_history	: [SIM_YEARS][dynamic]CivEvent,
+	event_history	: [SIM_YEARS][dynamic]Event,
 	ruler_idx		: int,
 }
 
@@ -57,7 +32,7 @@ civ_plus_1_year :: proc(c:^Civilization, year:int)
 	if dice_roll < 4
 	{
 		pop_killed := int(rand.float32_range(0.01, 0.05) * f32(c.population))
-		famine := CivEvent{type=.Famine, year=year, int1=pop_killed}
+		famine := Event{type=.Famine, year=year, int1=pop_killed}
 		append(&c.event_history[year], famine)
 		c.population -= pop_killed
 	}
