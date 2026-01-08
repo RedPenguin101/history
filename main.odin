@@ -10,6 +10,10 @@ DEBUG :: log.debug
 import "core:math/rand"
 import "core:strings"
 
+import vmem "core:mem/virtual"
+string_arena : vmem.Arena
+string_allocator : mem.Allocator
+
 SIM_YEARS :: 100
 DAYS_IN_YEAR :: 336
 
@@ -103,6 +107,9 @@ main :: proc()
 		}
 	}
 
+	string_allocator = vmem.arena_allocator(&string_arena)
+	defer vmem.arena_destroy(&string_arena)
+
 	defer delete(characters_global)
 	defer delete(character_events_global)
 
@@ -120,17 +127,19 @@ main :: proc()
 
 	printfln("Civ founded in year 0 with %d people, ruled by %d", civ.population, civ.ruler_idx)
 
-	for year in 0..<SIM_YEARS {
-		for day in 0..<DAYS_IN_YEAR {
-			char_events := characters_sim_loop(year, day)
-			for ch_env in char_events {
-				printfln(" %v", character_event_description(ch_env))
+	if true {
+		for year in 0..<SIM_YEARS {
+			for day in 0..<DAYS_IN_YEAR {
+				char_events := characters_sim_loop(year, day)
+				for ch_env in char_events {
+					printfln(" %v", character_event_description(ch_env))
+				}
 			}
-		}
-		civ_plus_1_year(&civ, year)
-		printfln("Year %d (%d):", year, civ.population)
-		for event in civ.event_history[year] {
-			printfln(" %v", civ_event_description(event))
+			civ_plus_1_year(&civ, year)
+			printfln("Year %d (%d):", year, civ.population)
+			for event in civ.event_history[year] {
+				printfln(" %v", civ_event_description(event))
+			}
 		}
 	}
 }

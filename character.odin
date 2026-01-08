@@ -1,6 +1,7 @@
 package history
 
 import "core:math/rand"
+import "core:strings"
 
 CharacterAttribute :: enum
 {
@@ -15,6 +16,7 @@ FERTILITY_START :: 15
 Character :: struct
 {
 	idx   : int,
+	name  : string,
 	age   : int,
 	alive : bool,
 	sex   : int,
@@ -41,15 +43,19 @@ character_event_description :: proc(ce:CharacterEvent) -> string
 {
 	switch ce.type {
 		case .Death: {
-			return tprintf("%d died at age %d.", ce.char1, characters_global[ce.char1].age)
+			return tprintf("%s died at age %d.", characters_global[ce.char1].name, characters_global[ce.char1].age)
 		}
 		case .Marriage: {
 			assert(ce.char1 != 0)
-			return tprintf("%d and %d got married.", ce.char1, ce.char2)
+			return tprintf("%s and %s got married.", characters_global[ce.char1].name, characters_global[ce.char2].name)
 		}
 		case .Birth: {
 			sex := "boy" if ce.int1 == male else "girl"
-			return tprintf("%d and %d had a baby %s, %d.", ce.char2, ce.char3, sex, ce.char1)
+			return tprintf("%s and %s had a baby %s, %s.",
+				characters_global[ce.char2].name,
+				characters_global[ce.char3].name,
+				sex,
+				characters_global[ce.char1].name)
 		}
 	}
 	panic("unreachable")
@@ -58,7 +64,7 @@ character_event_description :: proc(ce:CharacterEvent) -> string
 characters_global : [dynamic]Character
 character_events_global : [dynamic]CharacterEvent
 
-create_character :: proc(age, sex, mother, father:int) -> int
+create_character :: proc(age, sex, mother, father:int, name:string="") -> int
 {
 	idx := len(characters_global)
 	char := Character {
@@ -68,6 +74,11 @@ create_character :: proc(age, sex, mother, father:int) -> int
 		sex = sex,
 		mother = mother,
 		father = father,
+	}
+	if len(name) > 0 {
+		char.name = strings.clone(name, string_allocator)
+	} else {
+		char.name = strings.clone(generate_name(rand.int_range(3, 5)), string_allocator)
 	}
 	DEBUG("created", char)
 	append(&characters_global, char)

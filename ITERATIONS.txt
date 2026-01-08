@@ -30,7 +30,7 @@ The ruler character can get married and have children.
 In short
 --------
 
-- Character Names
+- Event for character becoming the ruler of a civ
 - Family trees for characters, marriage, children
 - Succession for rulers
 - Elite families
