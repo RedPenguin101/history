@@ -16,7 +16,8 @@ FERTILITY_START :: 15
 Character :: struct
 {
 	idx   : int,
-	name  : string,
+	given_name  : string,
+	family : int,
 	age   : int,
 	alive : bool,
 	sex   : int,
@@ -43,19 +44,23 @@ character_event_description :: proc(ce:CharacterEvent) -> string
 {
 	switch ce.type {
 		case .Death: {
-			return tprintf("%s died at age %d.", characters_global[ce.char1].name, characters_global[ce.char1].age)
+			return tprintf("%s %s died at age %d.",
+				characters_global[ce.char1].given_name, family_names[characters_global[ce.char1].family],
+				characters_global[ce.char1].age)
 		}
 		case .Marriage: {
 			assert(ce.char1 != 0)
-			return tprintf("%s and %s got married.", characters_global[ce.char1].name, characters_global[ce.char2].name)
+			return tprintf("%s %s and %s got married.",
+				characters_global[ce.char1].given_name, family_names[characters_global[ce.char1].family],
+				characters_global[ce.char2].given_name)
 		}
 		case .Birth: {
 			sex := "boy" if ce.int1 == male else "girl"
-			return tprintf("%s and %s had a baby %s, %s.",
-				characters_global[ce.char2].name,
-				characters_global[ce.char3].name,
+			return tprintf("%s %s and %s had a baby %s, %s.",
+				characters_global[ce.char2].given_name, family_names[characters_global[ce.char2].family],
+				characters_global[ce.char3].given_name,
 				sex,
-				characters_global[ce.char1].name)
+				characters_global[ce.char1].given_name)
 		}
 	}
 	panic("unreachable")
@@ -63,8 +68,9 @@ character_event_description :: proc(ce:CharacterEvent) -> string
 
 characters_global : [dynamic]Character
 character_events_global : [dynamic]CharacterEvent
+family_names : [dynamic]string
 
-create_character :: proc(age, sex, mother, father:int, name:string="") -> int
+create_character :: proc(age, sex, mother, father:int, family:=0, name:string="") -> int
 {
 	idx := len(characters_global)
 	char := Character {
@@ -72,13 +78,14 @@ create_character :: proc(age, sex, mother, father:int, name:string="") -> int
 		age = age,
 		alive = true,
 		sex = sex,
+		family = family,
 		mother = mother,
 		father = father,
 	}
 	if len(name) > 0 {
-		char.name = strings.clone(name, string_allocator)
+		char.given_name = strings.clone(name, string_allocator)
 	} else {
-		char.name = strings.clone(generate_name(rand.int_range(3, 5)), string_allocator)
+		char.given_name = strings.clone(generate_name(rand.int_range(3, 5)), string_allocator)
 	}
 	DEBUG("created", char)
 	append(&characters_global, char)
@@ -137,6 +144,17 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 			characters_global[new_spouse_idx].attributes += {.IsMarried}
 			characters_global[new_spouse_idx].spouse = char.idx
 
+			if characters_global[new_spouse_idx].family == 0 {
+				characters_global[new_spouse_idx].family = char.family
+			} else {
+				roll := rand.float32()
+				if roll < 0.5 {
+					characters_global[new_spouse_idx].family = char.family
+				} else {
+					characters_global[i].family = characters_global[new_spouse_idx].family
+				}
+			}
+
 			event := CharacterEvent{
 				type = .Marriage,
 				char1 = char.idx,
@@ -162,7 +180,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []CharacterEvent
 					roll := rand.float32()
 					if roll < 0.1 {
 						sex := rand.int_range(1, 3)
-						baby_idx := create_character(0, sex, char.idx, husband.idx)
+						baby_idx := create_character(0, sex, char.idx, husband.idx, family=char.family)
 						created := characters_global[baby_idx]
 						assert(created.idx != 0)
 						event := CharacterEvent{

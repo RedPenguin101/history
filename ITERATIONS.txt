@@ -27,6 +27,19 @@ Iteration 4
 
 The ruler character can get married and have children.
 
+Iteration 5
+-----------
+
+Characters are given first names using a rudimentary name creator.
+
+Iteration 6
+-----------
+
+Characters should have family names. When two characters get married,
+it's random which one gets put into the others family, unless one of
+the characters has no family name (indicating they are commoners.)
+Children inherit the family name of their parents.
+
 In short
 --------
 

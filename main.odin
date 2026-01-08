@@ -116,7 +116,10 @@ main :: proc()
 	append(&characters_global, Character{}) // Null character
 	civ := new_civ()
 	ruler_sex := rand.int_range(1,3)
-	ruler_idx := create_character(21, ruler_sex, 0, 0)
+	ruler_idx := create_character(21, ruler_sex, 0, 0, family=1)
+	ruler_family_name := generate_name(rand.int_range(3,6), string_allocator)
+	append(&family_names, "")
+	append(&family_names, ruler_family_name)
 	civ.ruler_idx = ruler_idx
 
 	defer {

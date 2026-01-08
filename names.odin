@@ -6,7 +6,7 @@ import "core:math/rand"
 vowels := [?]u8{'a', 'e', 'i', 'o', 'u'}
 consonants := [?]u8{'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'y', 'z'}
 
-generate_name :: proc(syllables_count:int) -> string
+generate_name :: proc(syllables_count:int, allocator:=context.temp_allocator) -> string
 {
 	structures := [?]string{"CVC", "CV", "VC", "V"}
 	builder := strings.builder_make(context.temp_allocator)
@@ -23,5 +23,5 @@ generate_name :: proc(syllables_count:int) -> string
 	}
 
 	ret := strings.to_string(builder)
-	return strings.to_pascal_case(ret, context.temp_allocator)
+	return strings.to_pascal_case(ret, allocator)
 }
