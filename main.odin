@@ -49,8 +49,11 @@ main :: proc()
 	defer delete(characters_global)
 	defer delete(character_events_global)
 
+
 	append(&characters_global, Character{}) // Null character
 	civ := new_civ()
+	printfln("Civ founded in year 0 with %d people", civ.population)
+
 	ruler_sex := rand.int_range(1,3)
 	ruler_idx := create_character(21, ruler_sex, 0, 0, family=1)
 	ruler_family_name := generate_name(rand.int_range(3,6), string_allocator)
@@ -58,14 +61,20 @@ main :: proc()
 	append(&family_names, ruler_family_name)
 	civ.ruler_idx = ruler_idx
 
+	became_ruler := Event{
+		type = .BecameRuler,
+		char1 = ruler_idx,
+		year = 0, day = 0,
+	}
+
+	append(&character_events_global, became_ruler)
+	printfln(" %v", event_description(became_ruler))
+
 	defer {
 		for events in civ.event_history {
 			delete(events)
 		}
 	}
-
-	printfln("Civ founded in year 0 with %d people, ruled by %s %s", civ.population,
-		characters_global[ruler_idx].given_name, ruler_family_name)
 
 	if true {
 		for year in 0..<SIM_YEARS {

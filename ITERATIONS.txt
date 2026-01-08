@@ -48,7 +48,6 @@ A character becoming the ruler of a civ is an event.
 In short
 --------
 
-- Event for character becoming the ruler of a civ
 - Family trees for characters, marriage, children
 - Succession for rulers
 - Elite families
@@ -59,5 +58,3 @@ Small Changes, refactors
 ------------------------
 
 - Different birth / death rates for males and females.
-- Split Civ into separate namespace
-- Combine civ and character events

@@ -1,7 +1,7 @@
 package history
 
 EventType :: enum
-{ Famine, Marriage, Death, Birth,}
+{ Famine, Marriage, Death, Birth, BecameRuler }
 
 Event :: struct
 {
@@ -15,6 +15,10 @@ Event :: struct
 event_description :: proc(ce:Event) -> string
 {
 	switch ce.type {
+		case .BecameRuler: {
+			char := characters_global[ce.char1]
+			return tprintf("%s %s became ruler of [the civilization].", char.given_name, family_names[char.family])
+		}
 		case .Famine: {
 			return tprintf("Famine swept the land, killing %d people.", ce.int1)
 		}
