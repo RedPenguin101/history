@@ -40,6 +40,11 @@ it's random which one gets put into the others family, unless one of
 the characters has no family name (indicating they are commoners.)
 Children inherit the family name of their parents.
 
+Iteration 7
+-----------
+
+A character becoming the ruler of a civ is an event.
+
 In short
 --------
 
@@ -50,7 +55,9 @@ In short
 - Religions and priestly casts
 - Multiple civilizations
 
-Small Changes
--------------
+Small Changes, refactors
+------------------------
 
 - Different birth / death rates for males and females.
+- Split Civ into separate namespace
+- Combine civ and character events
