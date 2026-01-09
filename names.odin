@@ -13,7 +13,6 @@ generate_name :: proc(syllables_count:int, allocator:=context.temp_allocator) ->
 	for _ in 0..<syllables_count {
 		structure := rand.choice(structures[:])
 		for c in structure {
-			DEBUG("struct", c)
 			if c == 'C' {
 				strings.write_byte(&builder, rand.choice(consonants[:]))
 			} else {

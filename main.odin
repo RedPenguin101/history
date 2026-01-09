@@ -6,6 +6,7 @@ tprintf :: fmt.tprintf
 import "core:mem"
 import "core:log"
 DEBUG :: log.debug
+INFO  :: log.info
 
 import "core:math/rand"
 
@@ -15,6 +16,13 @@ string_allocator : mem.Allocator
 
 SIM_YEARS :: 100
 DAYS_IN_YEAR :: 336
+
+global : struct {
+	characters : [dynamic]Character,
+	character_events : [dynamic]Event,
+	family_names : [dynamic]string,
+	civs : [dynamic]Civilization,
+}
 
 main :: proc()
 {
@@ -44,21 +52,35 @@ main :: proc()
 	}
 
 	string_allocator = vmem.arena_allocator(&string_arena)
-	defer vmem.arena_destroy(&string_arena)
 
-	defer delete(characters_global)
-	defer delete(character_events_global)
+	defer {
+		vmem.arena_destroy(&string_arena)
 
+		for c in global.characters {
+			delete(c.children)
+		}
+		delete(global.characters)
+		delete(global.character_events)
 
-	append(&characters_global, Character{}) // Null character
-	civ := new_civ()
+		for civ in global.civs {
+			for events in civ.event_history {
+				delete(events)
+			}
+		}
+		delete(global.civs)
+		delete(global.family_names)
+	}
+
+	append(&global.characters, Character{}) // Null character
+	append(&global.civs, new_civ())
+	civ := &global.civs[0]
 	printfln("Civ founded in year 0 with %d people", civ.population)
 
 	ruler_sex := rand.int_range(1,3)
 	ruler_idx := create_character(21, ruler_sex, 0, 0, family=1)
 	ruler_family_name := generate_name(rand.int_range(3,6), string_allocator)
-	append(&family_names, "")
-	append(&family_names, ruler_family_name)
+	append(&global.family_names, "")
+	append(&global.family_names, ruler_family_name)
 	civ.ruler_idx = ruler_idx
 
 	became_ruler := Event{
@@ -67,14 +89,8 @@ main :: proc()
 		year = 0, day = 0,
 	}
 
-	append(&character_events_global, became_ruler)
+	append(&global.character_events, became_ruler)
 	printfln(" %v", event_description(became_ruler))
-
-	defer {
-		for events in civ.event_history {
-			delete(events)
-		}
-	}
 
 	if true {
 		for year in 0..<SIM_YEARS {
@@ -97,7 +113,7 @@ main :: proc()
 					}
 				}
 			}
-			civ_plus_1_year(&civ, year)
+			civ_plus_1_year(civ, year)
 			printfln("Year %d (%d):", year, civ.population)
 			for event in civ.event_history[year] {
 				printfln(" %v", event_description(event))

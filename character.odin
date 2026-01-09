@@ -26,13 +26,9 @@ Character :: struct
 	attributes : bit_set[CharacterAttribute],
 }
 
-characters_global : [dynamic]Character
-character_events_global : [dynamic]Event
-family_names : [dynamic]string
-
 create_character :: proc(age, sex, mother, father:int, family:=0, name:string="") -> int
 {
-	idx := len(characters_global)
+	idx := len(global.characters)
 	char := Character {
 		idx = idx,
 		age = age,
@@ -47,8 +43,7 @@ create_character :: proc(age, sex, mother, father:int, family:=0, name:string=""
 	} else {
 		char.given_name = strings.clone(generate_name(rand.int_range(3, 5)), string_allocator)
 	}
-	DEBUG("created", char)
-	append(&characters_global, char)
+	append(&global.characters, char)
 	return idx
 }
 
@@ -56,7 +51,7 @@ find_or_create_suitable_mate :: proc(this:Character) -> int
 {
 	candidate := 0
 
-	for other in characters_global
+	for other in global.characters
 	{
 		if !other.alive do continue
 		if other.idx == this.idx do continue
@@ -81,7 +76,7 @@ find_or_create_suitable_mate :: proc(this:Character) -> int
 
 create_child :: proc(mother, father, year, day: int) {
 	sex := rand.int_range(1, 3)
-	fam := characters_global[mother].family
+	fam := global.characters[mother].family
 	baby_idx := create_character(0, sex, mother, father, family=fam)
 	event := Event{
 		type = .Birth,
@@ -92,15 +87,15 @@ create_child :: proc(mother, father, year, day: int) {
 		year = year,
 		day = day,
 	}
-	append(&characters_global[father].children, baby_idx)
-	append(&characters_global[mother].children, baby_idx)
-	append(&character_events_global, event)
+	append(&global.characters[father].children, baby_idx)
+	append(&global.characters[mother].children, baby_idx)
+	append(&global.character_events, event)
 }
 
 find_inheritor :: proc(char_idx:int) -> int
 {
-	for child_idx in characters_global[char_idx].children {
-		child := characters_global[child_idx]
+	for child_idx in global.characters[char_idx].children {
+		child := global.characters[child_idx]
 		if child.alive do return child_idx
 	}
 	// no living children
@@ -109,37 +104,34 @@ find_inheritor :: proc(char_idx:int) -> int
 
 characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 {
-	event_start := len(character_events_global)
+	event_start := len(global.character_events)
 	// Represents a single iterations. Probably there will be one allowed act per day, or 28*12=336 per year
-	for char, i in characters_global
+	for char, i in global.characters
 	{
 		if char.idx == 0 || !char.alive do continue
 
 		if .IsMarried not_in char.attributes && char.age >= FERTILITY_START && char.age < FERTILITY_END
 		{
-			DEBUG("1: marriage for i=", i, "char=", char)
 			new_spouse_idx := find_or_create_suitable_mate(char)
 			assert(new_spouse_idx > 0)
 
 			// Mutations are done separately because we're potentially creating characters as part of this.
 			// So the pointers can get messed up if there's a realloc
 
-			characters_global[i].attributes += {.IsMarried}
-			characters_global[i].spouse = new_spouse_idx
+			global.characters[i].attributes += {.IsMarried}
+			global.characters[i].spouse = new_spouse_idx
+			
+			global.characters[new_spouse_idx].attributes += {.IsMarried}
+			global.characters[new_spouse_idx].spouse = char.idx
 
-			DEBUG("2: marriage for i=", i, "char=", char)
-
-			characters_global[new_spouse_idx].attributes += {.IsMarried}
-			characters_global[new_spouse_idx].spouse = char.idx
-
-			if characters_global[new_spouse_idx].family == 0 {
-				characters_global[new_spouse_idx].family = char.family
+			if global.characters[new_spouse_idx].family == 0 {
+				global.characters[new_spouse_idx].family = char.family
 			} else {
 				roll := rand.float32()
 				if roll < 0.5 {
-					characters_global[new_spouse_idx].family = char.family
+					global.characters[new_spouse_idx].family = char.family
 				} else {
-					characters_global[i].family = characters_global[new_spouse_idx].family
+					global.characters[i].family = global.characters[new_spouse_idx].family
 				}
 			}
 
@@ -150,12 +142,12 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 				year = year,
 				day = day_of_year,
 			}
-			append(&character_events_global, event)
+			append(&global.character_events, event)
 		}
 
 		if day_of_year == 0
 		{
-			characters_global[i].age += 1
+			global.characters[i].age += 1
 
 			// Determine if the character has children this year.
 			// There's a 10% chance whenever both partners in a
@@ -163,7 +155,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 
 			if char.sex == female && .IsMarried in char.attributes && char.age >= FERTILITY_START && char.age < FERTILITY_END
 			{
-				husband := characters_global[char.spouse]
+				husband := global.characters[char.spouse]
 				if husband.age >= FERTILITY_START && husband.age < FERTILITY_END {
 					roll := rand.float32()
 					if roll < 0.1 {
@@ -178,9 +170,9 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 			roll := rand.float32()
 			if roll < death_prob
 			{
-				characters_global[i].alive = false
+				global.characters[i].alive = false
 				if .IsMarried in char.attributes {
-					spouse := &characters_global[char.spouse]
+					spouse := &global.characters[char.spouse]
 					spouse.spouse = 0
 					spouse.attributes -= {.IsMarried}
 				}
@@ -190,11 +182,10 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 					year = year,
 					day = day_of_year,
 				}
-				append(&character_events_global, event)
+				append(&global.character_events, event)
 			}
 		}
 	}
-	event_end := len(character_events_global)
-	/* DEBUG("events", event_start, event_end) */
-	return character_events_global[event_start:event_end]
+	event_end := len(global.character_events)
+	return global.character_events[event_start:event_end]
 }

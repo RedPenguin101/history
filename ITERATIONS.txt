@@ -54,12 +54,15 @@ In short
 --------
 
 - Family trees for characters, marriage, children
+- families should build up catalogs of given names, which are more likely to be reused when naming children
 - Elite families
 - Religions and priestly casts
 - Multiple civilizations
 - Written histories
 - Emergant elites from military
 - Characters have attributes: intelligence, physical, charisma, military, tall, short, obese, skinny, righteous, loyal
+- Name generation should be done based on standard phoenetic symbols, not on latin letters. Then, translate them to latin letters (or another literation system)
+- Longer term: Given names should be tracked at the civ level, and change in popularity over time.
 
 Small Changes, refactors
 ------------------------
