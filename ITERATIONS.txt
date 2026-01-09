@@ -50,6 +50,17 @@ Iteration 8
 
 Rulers are suceeded by their first living child.
 
+Iteration 9
+-----------
+
+Children are most likely to be named based on their parents or
+grandparents.
+
+Iteration 10
+------------
+
+Better succession: English rules, walk the tree.
+
 In short
 --------
 

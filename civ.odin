@@ -9,7 +9,6 @@ Civilization :: struct
 	birth_rate		: f32,
 	death_rate		: f32,
 	event_history	: [SIM_YEARS][dynamic]Event,
-	given_names     : [3][dynamic]string,
 	ruler_idx		: int,
 }
 
@@ -24,13 +23,6 @@ new_civ :: proc() -> Civilization
 		birth_rate = 37.0/1000.0,
 		death_rate = 37.0/1000.0,
 	}
-	civ.given_names[male] = make([dynamic]string, string_allocator)
-	civ.given_names[female] = make([dynamic]string, string_allocator)
-	for _ in 0..<10 {
-		append(&civ.given_names[male], generate_name(rand.int_range(2, 6), string_allocator))
-		append(&civ.given_names[female], generate_name(rand.int_range(2, 6), string_allocator))
-	}
-	INFO("Generated civ names", civ.given_names)
 
 	return civ
 }

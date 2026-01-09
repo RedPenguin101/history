@@ -8,40 +8,40 @@ CharacterAttribute :: enum
 	IsMarried,
 }
 
-male   :: 1
-female :: 2
+male			:: 1
+female			:: 2
 FERTILITY_END   :: 50
 FERTILITY_START :: 15
 
 Character :: struct
 {
-	idx   : int,
-	given_name  : string,
-	family : int,
-	age   : int,
-	alive : bool,
-	sex   : int,
-	spouse, mother, father: int,
-	children : [dynamic]int,
-	attributes : bit_set[CharacterAttribute],
+	idx						: int,
+	given_name				: int,
+	family					: int,
+	age						: int,
+	alive					: bool,
+	sex						: int,
+	spouse, mother, father	: int,
+	children				: [dynamic]int,
+	attributes				: bit_set[CharacterAttribute],
 }
 
-create_character :: proc(age, sex, mother, father:int, family:=0, name:string="") -> int
+create_character :: proc(age, sex, mother, father:int, family:=0, name:=0) -> int
 {
 	idx := len(global.characters)
 	char := Character {
-		idx = idx,
-		age = age,
-		alive = true,
-		sex = sex,
-		family = family,
-		mother = mother,
-		father = father,
+		idx		= idx,
+		age		= age,
+		alive	= true,
+		sex		= sex,
+		family	= family,
+		mother	= mother,
+		father	= father,
 	}
-	if len(name) > 0 {
-		char.given_name = strings.clone(name, string_allocator)
+	if name > 0 {
+		char.given_name = name
 	} else {
-		char.given_name = strings.clone(generate_name(rand.int_range(3, 5)), string_allocator)
+		char.given_name = rand.int_max(len(global.given_names[sex]))
 	}
 	append(&global.characters, char)
 	return idx
@@ -74,10 +74,54 @@ find_or_create_suitable_mate :: proc(this:Character) -> int
     return create_character(age, sex, 0, 0)
 }
 
+choose_child_name :: proc(mother, father, sex:int) -> int {
+	mat_gp := global.characters[mother].father if sex == male else global.characters[mother].mother
+	pat_gp := global.characters[father].father if sex == male else global.characters[father].mother
+
+	has_mat_gp := (mat_gp > 0)
+	has_pat_gp := (pat_gp > 0)
+
+	child_name : int
+
+	parent_name := global.characters[father if sex == male else mother].given_name
+	mat_gp_name := global.characters[mat_gp].given_name if has_mat_gp else 0
+	pat_gp_name := global.characters[pat_gp].given_name if has_pat_gp else 0
+
+	roll := rand.float32()
+
+	has_sibling_named_for_parent := false
+	has_sibling_named_for_mat_gp := false
+	has_sibling_named_for_pat_gp := false
+
+	for child in global.characters[mother].children {
+		sibling_name := global.characters[child].given_name
+		if sibling_name == parent_name do has_sibling_named_for_parent = true
+		if sibling_name == mat_gp_name do has_sibling_named_for_mat_gp = true
+		if sibling_name == pat_gp_name do has_sibling_named_for_pat_gp = true
+	}
+
+	if roll < 0.3 && !has_sibling_named_for_parent
+	{
+		return parent_name
+	}
+	else if roll < 0.5 && has_pat_gp && !has_sibling_named_for_pat_gp
+	{
+		return pat_gp_name
+	}
+	else if roll < 0.7 && has_mat_gp && !has_sibling_named_for_mat_gp
+	{
+		return mat_gp_name
+	}
+	return rand.int_max(len(global.given_names[sex]))
+}
+
 create_child :: proc(mother, father, year, day: int) {
-	sex := rand.int_range(1, 3)
 	fam := global.characters[mother].family
-	baby_idx := create_character(0, sex, mother, father, family=fam)
+	sex := rand.int_range(1, 3)
+	name := choose_child_name(mother, father, sex)
+
+	baby_idx := create_character(0, sex, mother, father, family=fam, name=name)
+
 	event := Event{
 		type = .Birth,
 		char1 = baby_idx,
@@ -87,6 +131,7 @@ create_child :: proc(mother, father, year, day: int) {
 		year = year,
 		day = day,
 	}
+
 	append(&global.characters[father].children, baby_idx)
 	append(&global.characters[mother].children, baby_idx)
 	append(&global.character_events, event)
@@ -120,7 +165,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 
 			global.characters[i].attributes += {.IsMarried}
 			global.characters[i].spouse = new_spouse_idx
-			
+
 			global.characters[new_spouse_idx].attributes += {.IsMarried}
 			global.characters[new_spouse_idx].spouse = char.idx
 

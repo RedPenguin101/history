@@ -18,10 +18,11 @@ SIM_YEARS :: 100
 DAYS_IN_YEAR :: 336
 
 global : struct {
-	characters : [dynamic]Character,
-	character_events : [dynamic]Event,
-	family_names : [dynamic]string,
-	civs : [dynamic]Civilization,
+	characters			: [dynamic]Character,
+	character_events	: [dynamic]Event,
+	given_names			: [3][dynamic]string,
+	family_names		: [dynamic]string,
+	civs				: [dynamic]Civilization,
 }
 
 main :: proc()
@@ -52,6 +53,10 @@ main :: proc()
 	}
 
 	string_allocator = vmem.arena_allocator(&string_arena)
+	for _ in 0..<10 {
+		append(&global.given_names[male], generate_name(rand.int_range(2, 6), string_allocator))
+		append(&global.given_names[female], generate_name(rand.int_range(2, 6), string_allocator))
+	}
 
 	defer {
 		vmem.arena_destroy(&string_arena)
