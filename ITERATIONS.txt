@@ -45,16 +45,24 @@ Iteration 7
 
 A character becoming the ruler of a civ is an event.
 
+Iteration 8
+-----------
+
+Rulers are suceeded by their first living child.
+
 In short
 --------
 
 - Family trees for characters, marriage, children
-- Succession for rulers
 - Elite families
 - Religions and priestly casts
 - Multiple civilizations
+- Written histories
+- Emergant elites from military
+- Characters have attributes: intelligence, physical, charisma, military, tall, short, obese, skinny, righteous, loyal
 
 Small Changes, refactors
 ------------------------
 
 - Different birth / death rates for males and females.
+- Adjust birth / death rates to be more like medieval europe

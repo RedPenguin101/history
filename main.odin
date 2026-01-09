@@ -82,6 +82,19 @@ main :: proc()
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
 					printfln(" %v", event_description(ch_env))
+					if ch_env.type == .Death && ch_env.char1 == civ.ruler_idx {
+						inheritor := find_inheritor(civ.ruler_idx)
+						if inheritor == 0 do panic("can't find inheritor")
+						civ.ruler_idx = inheritor
+						became_ruler := Event{
+							type = .BecameRuler,
+							char1 = civ.ruler_idx,
+							year = year, day = day,
+						}
+
+						append(&civ.event_history[year], became_ruler)
+
+					}
 				}
 			}
 			civ_plus_1_year(&civ, year)

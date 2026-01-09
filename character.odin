@@ -22,6 +22,7 @@ Character :: struct
 	alive : bool,
 	sex   : int,
 	spouse, mother, father: int,
+	children : [dynamic]int,
 	attributes : bit_set[CharacterAttribute],
 }
 
@@ -76,6 +77,34 @@ find_or_create_suitable_mate :: proc(this:Character) -> int
 	sex := male if this.sex == female else female
 
     return create_character(age, sex, 0, 0)
+}
+
+create_child :: proc(mother, father, year, day: int) {
+	sex := rand.int_range(1, 3)
+	fam := characters_global[mother].family
+	baby_idx := create_character(0, sex, mother, father, family=fam)
+	event := Event{
+		type = .Birth,
+		char1 = baby_idx,
+		char2 = mother,
+		char3 = father,
+		int1  = sex,
+		year = year,
+		day = day,
+	}
+	append(&characters_global[father].children, baby_idx)
+	append(&characters_global[mother].children, baby_idx)
+	append(&character_events_global, event)
+}
+
+find_inheritor :: proc(char_idx:int) -> int
+{
+	for child_idx in characters_global[char_idx].children {
+		child := characters_global[child_idx]
+		if child.alive do return child_idx
+	}
+	// no living children
+	return 0
 }
 
 characters_sim_loop :: proc(year, day_of_year:int) -> []Event
@@ -138,20 +167,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 				if husband.age >= FERTILITY_START && husband.age < FERTILITY_END {
 					roll := rand.float32()
 					if roll < 0.1 {
-						sex := rand.int_range(1, 3)
-						baby_idx := create_character(0, sex, char.idx, husband.idx, family=char.family)
-						created := characters_global[baby_idx]
-						assert(created.idx != 0)
-						event := Event{
-							type = .Birth,
-							char1 = baby_idx,
-							char2 = char.idx,
-							char3 = husband.idx,
-							int1  = sex,
-							year = year,
-							day = day_of_year,
-						}
-						append(&character_events_global, event)
+						create_child(i, char.spouse, day_of_year, year)
 					}
 				}
 			}
