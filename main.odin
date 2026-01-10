@@ -14,7 +14,7 @@ import vmem "core:mem/virtual"
 string_arena : vmem.Arena
 string_allocator : mem.Allocator
 
-SIM_YEARS :: 100
+SIM_YEARS :: 200
 DAYS_IN_YEAR :: 336
 
 global : struct {
@@ -128,7 +128,7 @@ main :: proc()
 			for day in 0..<DAYS_IN_YEAR {
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
-					printfln("In %d, %v", year, event_description(ch_env))
+					/* printfln("In %d, %v", year, event_description(ch_env)) */
 					if ch_env.type == .Death && ch_env.char1 == civ.ruler_idx {
 						// The current ruler has died, select a new one
 						old_ruler := civ.ruler_idx
@@ -170,8 +170,16 @@ main :: proc()
 			}
 			civ_plus_1_year(civ, year)
 			for event in civ.event_history[year] {
-				printfln("In %d, %v", year, event_description(event))
+				/* printfln("In %d, %v", year, event_description(event)) */
 			}
 		}
+	}
+
+	for house in global.houses[1:] {
+		l, t := descendents(house.founder_idx)
+		fmt.printfln("after %d years, house %s has %d living members (%d total)",
+			SIM_YEARS,
+			global.family_names[house.house_name],
+			l, t)
 	}
 }

@@ -342,3 +342,19 @@ create_house :: proc(start_year:int) -> int
 
 	return house_idx
 }
+
+descendents :: proc(char_idx:int) -> (living,total:int) {
+	// TODO: This will definitely double count
+	char := global.characters[char_idx]
+
+	tot := 1
+	liv := 1 if char.alive else 0
+
+	for child in char.children {
+		ld, td := descendents(child)
+		liv += ld
+		tot += td
+	}
+
+	return liv, tot
+}

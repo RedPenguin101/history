@@ -105,3 +105,4 @@ Small Changes, refactors
 
 - Different birth / death rates for males and females.
 - Adjust birth / death rates to be more like medieval europe
+- From above, check that population doesn't explode too badly
