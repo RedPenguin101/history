@@ -18,7 +18,7 @@ Character :: struct
 	idx						: int,
 	given_name				: int,
 	family					: int,
-	age						: int,
+	birth_year              : int,
 	alive					: bool,
 	sex						: int,
 	spouse, mother, father	: int,
@@ -26,12 +26,12 @@ Character :: struct
 	attributes				: bit_set[CharacterAttribute],
 }
 
-create_character :: proc(age, sex, mother, father:int, family:=0, name:=0) -> int
+create_character :: proc(birth_year, sex, mother, father:int, family:=0, name:=0) -> int
 {
 	idx := len(global.characters)
 	char := Character {
 		idx		= idx,
-		age		= age,
+		birth_year = birth_year,
 		alive	= true,
 		sex		= sex,
 		family	= family,
@@ -47,17 +47,18 @@ create_character :: proc(age, sex, mother, father:int, family:=0, name:=0) -> in
 	return idx
 }
 
-find_or_create_suitable_mate :: proc(this:Character) -> int
+find_or_create_suitable_mate :: proc(this:Character, year:int) -> int
 {
 	candidate := 0
 
 	for other in global.characters
 	{
+		other_age := year-other.birth_year
 		if !other.alive do continue
 		if other.idx == this.idx do continue
 		if other.sex == this.sex do continue
-		if other.age < FERTILITY_START do continue
-		if other.age > FERTILITY_END do continue
+		if other_age < FERTILITY_START do continue
+		if other_age > FERTILITY_END do continue
 		if other.father == this.father do continue
 		if other.mother == this.mother do continue
 		if .IsMarried in other.attributes do continue
@@ -69,9 +70,10 @@ find_or_create_suitable_mate :: proc(this:Character) -> int
 	// If no candidate exists, create one
 
 	age := rand.int_range(FERTILITY_START, FERTILITY_END)
+	birth_year := year - age
 	sex := male if this.sex == female else female
 
-    return create_character(age, sex, 0, 0)
+    return create_character(birth_year, sex, 0, 0)
 }
 
 choose_child_name :: proc(mother, father, sex:int) -> int {
@@ -120,7 +122,7 @@ create_child :: proc(mother, father, year, day: int) {
 	sex := rand.int_range(1, 3)
 	name := choose_child_name(mother, father, sex)
 
-	baby_idx := create_character(0, sex, mother, father, family=fam, name=name)
+	baby_idx := create_character(year, sex, mother, father, family=fam, name=name)
 
 	event := Event{
 		type = .Birth,
@@ -177,9 +179,11 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 	{
 		if char.idx == 0 || !char.alive do continue
 
-		if .IsMarried not_in char.attributes && char.age >= FERTILITY_START && char.age < FERTILITY_END
+		char_age := year - char.birth_year
+
+		if .IsMarried not_in char.attributes && char_age >= FERTILITY_START && char_age < FERTILITY_END
 		{
-			new_spouse_idx := find_or_create_suitable_mate(char)
+			new_spouse_idx := find_or_create_suitable_mate(char, year)
 			assert(new_spouse_idx > 0)
 
 			// Mutations are done separately because we're potentially creating characters as part of this.
@@ -214,16 +218,15 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 
 		if day_of_year == 0
 		{
-			global.characters[i].age += 1
-
 			// Determine if the character has children this year.
 			// There's a 10% chance whenever both partners in a
 			// marriage are fertile
 
-			if char.sex == female && .IsMarried in char.attributes && char.age >= FERTILITY_START && char.age < FERTILITY_END
+			if char.sex == female && .IsMarried in char.attributes && char_age >= FERTILITY_START && char_age < FERTILITY_END
 			{
 				husband := global.characters[char.spouse]
-				if husband.age >= FERTILITY_START && husband.age < FERTILITY_END {
+				husband_age := year-husband.birth_year
+				if husband_age >= FERTILITY_START && husband_age < FERTILITY_END {
 					roll := rand.float32()
 					if roll < 0.1 {
 						create_child(i, char.spouse, day_of_year, year)
@@ -232,8 +235,8 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 			}
 
 			// Determine if character dies this year
-			assert(char.age < len(DEATH_RATE))
-			death_prob := DEATH_RATE[char.age]
+			assert(char_age < len(DEATH_RATE))
+			death_prob := DEATH_RATE[char_age]
 			roll := rand.float32()
 			if roll < death_prob
 			{

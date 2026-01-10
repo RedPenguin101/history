@@ -29,7 +29,7 @@ event_description :: proc(ce:Event) -> string
 			return tprintf("%s %s died at age %d.",
 				global.given_names[char.sex][char.given_name],
 				global.family_names[char.family],
-				char.age)
+				ce.year-char.birth_year)
 		}
 		case .Marriage: {
 			assert(ce.char1 != 0)
