@@ -74,6 +74,7 @@ main :: proc()
 			}
 		}
 		delete(global.civs)
+		delete(global.houses)
 		delete(global.family_names)
 		delete(global.given_names[1])
 		delete(global.given_names[2])
@@ -109,11 +110,13 @@ main :: proc()
 	}
 	fmt.printfln("were also prominant.")
 
+	civ.ruler_house = 1
 	civ.ruler_idx = ruling_house.current_head
 
 	became_ruler := Event{
 		type = .BecameRuler,
 		char1 = ruling_house.current_head,
+		int1 = 1,
 		year = 0, day = 0,
 	}
 
@@ -127,12 +130,36 @@ main :: proc()
 				for ch_env in char_events {
 					printfln("In %d, %v", year, event_description(ch_env))
 					if ch_env.type == .Death && ch_env.char1 == civ.ruler_idx {
-						inheritor := find_inheritor(civ.ruler_idx)
-						if inheritor == 0 do panic("can't find inheritor")
-						civ.ruler_idx = inheritor
+						// The current ruler has died, select a new one
+						old_ruler := civ.ruler_idx
+						old_house := civ.ruler_house
+
+						new_house_head := global.houses[civ.ruler_house].current_head
+						if new_house_head > 0 {
+							civ.ruler_idx = new_house_head
+						} else {
+							// The old house is extinct
+							new_house := 0
+							new_ruler := 0
+							for house, i in global.houses {
+								if house.current_head > 0 {
+									new_house = i
+									new_ruler = house.current_head
+									break
+								}
+							}
+							if new_house > 0 {
+								civ.ruler_house = new_house
+								civ.ruler_idx   = global.houses[new_house].current_head
+							} else {
+								panic("Couldn't find a candidate for new ruler...")
+							}
+						}
 						became_ruler := Event{
 							type = .BecameRuler,
 							char1 = civ.ruler_idx,
+							int1  = civ.ruler_house,
+							char2 = old_ruler, int2 = old_house,
 							year = year, day = day,
 						}
 

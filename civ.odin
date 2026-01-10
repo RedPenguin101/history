@@ -9,6 +9,7 @@ Civilization :: struct
 	birth_rate		: f32,
 	death_rate		: f32,
 	event_history	: [SIM_YEARS][dynamic]Event,
+	ruler_house		: int,
 	ruler_idx		: int,
 }
 

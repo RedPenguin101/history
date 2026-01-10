@@ -65,11 +65,8 @@ in this, needs improvement.
 Iteration 11
 ------------
 
-- redo inheritor to take from the founder. Should avoid backtracking
-- houses can become extinct
 - marriages between elite families
 - random number of elite houses created
-- store ruling house in civ
 
 When a civilization is created, 3-5 elite houses are created. To
 create a house, a founder member is generated between 50 and 100
