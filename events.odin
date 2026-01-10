@@ -18,7 +18,7 @@ event_description :: proc(ce:Event) -> string
 		case .BecameRuler: {
 			char := global.characters[ce.char1]
 			return tprintf("%s %s became ruler of [the civilization].",
-				global.given_names[char.sex][char.given_name],
+				character_name(ce.char1),
 				global.family_names[char.family])
 		}
 		case .Famine: {
@@ -27,7 +27,7 @@ event_description :: proc(ce:Event) -> string
 		case .Death: {
 			char := global.characters[ce.char1]
 			return tprintf("%s %s died at age %d.",
-				global.given_names[char.sex][char.given_name],
+				character_name(ce.char1),
 				global.family_names[char.family],
 				ce.year-char.birth_year)
 		}
@@ -35,10 +35,11 @@ event_description :: proc(ce:Event) -> string
 			assert(ce.char1 != 0)
 			char1 := global.characters[ce.char1]
 			char2 := global.characters[ce.char2]
-			return tprintf("%s %s and %s got married.",
-				global.given_names[char1.sex][char1.given_name],
-				global.family_names[char1.family],
-				global.given_names[char2.sex][char2.given_name])
+			return tprintf("%s %s and %s %s got married.",
+				character_name(ce.char1),
+				global.family_names[ce.int1],
+				character_name(ce.char2),
+				global.family_names[ce.int2])
 		}
 		case .Birth: {
 			sex := "boy" if ce.int1 == male else "girl"
@@ -46,11 +47,11 @@ event_description :: proc(ce:Event) -> string
 			char2 := global.characters[ce.char2]
 			char3 := global.characters[ce.char3]
 			return tprintf("%s %s and %s had a baby %s, %s.",
-				global.given_names[char2.sex][char2.given_name],
+				character_name(ce.char2),
 				global.family_names[char2.family],
-				global.given_names[char3.sex][char3.given_name],
+				character_name(ce.char3),
 				sex,
-				global.given_names[char1.sex][char1.given_name])
+				character_name(ce.char1))
 		}
 	}
 	panic("unreachable")

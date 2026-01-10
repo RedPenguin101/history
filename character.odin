@@ -47,6 +47,13 @@ create_character :: proc(birth_year, sex, mother, father:int, family:=0, name:=0
 	return idx
 }
 
+character_name :: proc(idx:int) -> string
+{
+	char := global.characters[idx]
+	sex := char.sex
+	return global.given_names[sex][char.given_name]
+}
+
 find_or_create_suitable_mate :: proc(this:Character, year:int) -> int
 {
 	candidate := 0
@@ -195,6 +202,10 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 			global.characters[new_spouse_idx].attributes += {.IsMarried}
 			global.characters[new_spouse_idx].spouse = char.idx
 
+			char_old_family := char.family
+			spouse_old_family := global.characters[new_spouse_idx].family
+			// if the new spouse is a commener, they become part of the family
+			// if they are not a common, it's 50/50 who joins whos family
 			if global.characters[new_spouse_idx].family == 0 {
 				global.characters[new_spouse_idx].family = char.family
 			} else {
@@ -212,6 +223,8 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 				char2 = new_spouse_idx,
 				year = year,
 				day = day_of_year,
+				int1 = char_old_family,
+				int2 = spouse_old_family,
 			}
 			append(&global.character_events, event)
 		}
@@ -258,4 +271,34 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 	}
 	event_end := len(global.character_events)
 	return global.character_events[event_start:event_end]
+}
+
+/* HOUSES */
+
+House :: struct
+{
+	house_name   : int,
+	founder_idx  : int,
+	current_head : int,
+}
+
+create_house :: proc(start_year:int) -> int
+{
+	house_idx := len(global.houses)
+	house_name_idx := len(global.family_names)
+	house_name := generate_name(rand.int_range(3,6), 0, string_allocator)
+	append(&global.family_names, house_name)
+
+	founder_sex := rand.int_range(1,3)
+	founder_idx := create_character(start_year, founder_sex, 0, 0, house_idx, house_name_idx)
+
+	house := House {
+		house_name = house_name_idx,
+		founder_idx = founder_idx,
+		current_head = founder_idx,
+	}
+
+	append(&global.houses, house)
+
+	return house_idx
 }

@@ -20,6 +20,7 @@ DAYS_IN_YEAR :: 336
 global : struct {
 	characters			: [dynamic]Character,
 	character_events	: [dynamic]Event,
+	houses              : [dynamic]House,
 	given_names			: [3][dynamic]string,
 	family_names		: [dynamic]string,
 	civs				: [dynamic]Civilization,
@@ -78,21 +79,41 @@ main :: proc()
 		delete(global.given_names[2])
 	}
 
+
+	append(&global.family_names, "(commoner)")
 	append(&global.characters, Character{}) // Null character
+	append(&global.houses, House{}) // Null House
 	append(&global.civs, new_civ())
 	civ := &global.civs[0]
-	printfln("Civ founded in year 0 with %d people", civ.population)
 
-	ruler_sex := rand.int_range(1,3)
-	ruler_idx := create_character(-21, ruler_sex, 0, 0, family=1)
-	ruler_family_name := generate_name(rand.int_range(3,6), 0, string_allocator)
-	append(&global.family_names, "")
-	append(&global.family_names, ruler_family_name)
-	civ.ruler_idx = ruler_idx
+	for _ in 0..<5 {
+		idx := create_house(-25)
+		house := global.houses[idx]
+	}
+
+	ruling_house := global.houses[1]
+
+	fmt.printfln("The civilization [name] emerged in the year 0. It numbered %d people", civ.population)
+	fmt.printfln("It was ruled by %s of house %s.", character_name(ruling_house.current_head), global.family_names[ruling_house.house_name])
+	fmt.print("The houses of ")
+	for house, i in global.houses[2:] {
+		if i < len(global.houses)-4
+		{
+			fmt.printf("%s, ", global.family_names[house.house_name])
+		}
+		else if i == len(global.houses)-4 {
+			fmt.printf("%s and ", global.family_names[house.house_name])
+		} else {
+			fmt.printf("%s ", global.family_names[house.house_name])
+		}
+	}
+	fmt.printfln("were also prominant.")
+
+	civ.ruler_idx = ruling_house.current_head
 
 	became_ruler := Event{
 		type = .BecameRuler,
-		char1 = ruler_idx,
+		char1 = ruling_house.current_head,
 		year = 0, day = 0,
 	}
 

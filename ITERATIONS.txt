@@ -65,18 +65,30 @@ in this, needs improvement.
 Iteration 11
 ------------
 
+- redo inheritor to take from the founder. Should avoid backtracking
+- houses can become extinct
+- marriages between elite families
+- random number of elite houses created
+- store ruling house in civ
+
 When a civilization is created, 3-5 elite houses are created. To
 create a house, a founder member is generated between 50 and 100
 years before the civs founding, and the family tree run forward to the
 civ founding year. Each house has a head, which starts with the
 founder and is inherited on death. One of the houses becomes the
-ruling family of the civ.
+ruling family of the civ, and the current head of the house becomes
+the ruler. When a ruler dies and there are no suitable candidates from
+the house to succeed them, a random other house is selected to be the
+ruling house, and their current head becomes the ruler.
 
 The civ founding message looks like this:
 
 > The civilization [name] emerged in year [year]. It numbered [pop]
 > people. The civilization was ruled by house [ruling house name]. The
 > houses of [other house names] were also prominent at this time.
+
+When elites get married they prefer to marry someone in another elite
+family, only marrying a commoner if there are no available candidates.
 
 In short
 --------
