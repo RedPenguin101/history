@@ -137,14 +137,36 @@ create_child :: proc(mother, father, year, day: int) {
 	append(&global.character_events, event)
 }
 
-find_inheritor :: proc(char_idx:int) -> int
+find_inheritor :: proc(char_idx:int, ignore:=0) -> int
 {
-	for child_idx in global.characters[char_idx].children {
+	// TODO: This will fail in the case that a char has no
+	// descendents, and their next sibling has no descendents.
+	// It will oscillate between checking the char and the sibling. A
+	// 'seen' set is required.
+
+	inheritor := 0
+	char := global.characters[char_idx]
+	for child_idx in char.children {
+		if child_idx == ignore {
+			continue
+		}
 		child := global.characters[child_idx]
-		if child.alive do return child_idx
+		if child.alive {
+			return child_idx
+		}
+		else {
+			inheritor = find_inheritor(child_idx)
+		}
+		if inheritor != 0 do return inheritor
+	}
+	if inheritor == 0 && char.mother != 0 {
+		inheritor = find_inheritor(char.mother, char_idx)
+	}
+	if inheritor == 0 && char.father != 0 {
+		inheritor = find_inheritor(char.father, char_idx)
 	}
 	// no living children
-	return 0
+	return inheritor
 }
 
 characters_sim_loop :: proc(year, day_of_year:int) -> []Event

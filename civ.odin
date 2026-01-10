@@ -31,7 +31,7 @@ civ_plus_1_year :: proc(c:^Civilization, year:int)
 {
 	dice_roll := rand.int_max(100)
 	// 4% chance of famine
-	if dice_roll < 4
+	if dice_roll < 0 // temporarily turned off
 	{
 		pop_killed := int(rand.float32_range(0.01, 0.05) * f32(c.population))
 		famine := Event{type=.Famine, year=year, int1=pop_killed}

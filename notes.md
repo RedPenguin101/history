@@ -30,3 +30,8 @@ loop already has a 'special' first of the year tick where annual
 actions happen (death being one of them - death happens on the first
 day of the year. Which I suppose technically would mean the civ has no
 ruler for a year)
+
+Misc grab bag of planned features
+---------------------------------
+
+- Civs can demand tribute from other this.

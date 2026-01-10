@@ -59,7 +59,8 @@ grandparents.
 Iteration 10
 ------------
 
-Better succession: English rules, walk the tree.
+Better succession: English rules, walk the tree. There's still a bug
+in this, needs improvement.
 
 In short
 --------

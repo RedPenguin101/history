@@ -74,6 +74,8 @@ main :: proc()
 		}
 		delete(global.civs)
 		delete(global.family_names)
+		delete(global.given_names[1])
+		delete(global.given_names[2])
 	}
 
 	append(&global.characters, Character{}) // Null character
@@ -95,14 +97,14 @@ main :: proc()
 	}
 
 	append(&global.character_events, became_ruler)
-	printfln(" %v", event_description(became_ruler))
+	printfln("In 0, %v", event_description(became_ruler))
 
 	if true {
 		for year in 0..<SIM_YEARS {
 			for day in 0..<DAYS_IN_YEAR {
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
-					printfln(" %v", event_description(ch_env))
+					printfln("In %d, %v", year, event_description(ch_env))
 					if ch_env.type == .Death && ch_env.char1 == civ.ruler_idx {
 						inheritor := find_inheritor(civ.ruler_idx)
 						if inheritor == 0 do panic("can't find inheritor")
@@ -119,9 +121,8 @@ main :: proc()
 				}
 			}
 			civ_plus_1_year(civ, year)
-			printfln("Year %d (%d):", year, civ.population)
 			for event in civ.event_history[year] {
-				printfln(" %v", event_description(event))
+				printfln("In %d, %v", year, event_description(event))
 			}
 		}
 	}
