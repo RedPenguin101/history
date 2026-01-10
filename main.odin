@@ -54,8 +54,8 @@ main :: proc()
 
 	string_allocator = vmem.arena_allocator(&string_arena)
 	for _ in 0..<10 {
-		append(&global.given_names[male], generate_name(rand.int_range(2, 6), string_allocator))
-		append(&global.given_names[female], generate_name(rand.int_range(2, 6), string_allocator))
+		append(&global.given_names[male], generate_name(rand.int_range(2, 6), male, string_allocator))
+		append(&global.given_names[female], generate_name(rand.int_range(2, 6), female, string_allocator))
 	}
 
 	defer {
@@ -85,7 +85,7 @@ main :: proc()
 
 	ruler_sex := rand.int_range(1,3)
 	ruler_idx := create_character(21, ruler_sex, 0, 0, family=1)
-	ruler_family_name := generate_name(rand.int_range(3,6), string_allocator)
+	ruler_family_name := generate_name(rand.int_range(3,6), 0, string_allocator)
 	append(&global.family_names, "")
 	append(&global.family_names, ruler_family_name)
 	civ.ruler_idx = ruler_idx

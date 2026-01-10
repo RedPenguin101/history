@@ -6,7 +6,7 @@ import "core:math/rand"
 vowels := [?]u8{'a', 'e', 'i', 'o', 'u'}
 consonants := [?]u8{'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm', 'n', 'p', 'q', 'r', 's', 't', 'v', 'w', 'y', 'z'}
 
-generate_name :: proc(syllables_count:int, allocator:=context.temp_allocator) -> string
+generate_name :: proc(syllables_count:int, sex:int, allocator:=context.temp_allocator) -> string
 {
 	structures := [?]string{"CVC", "CV", "VC", "V"}
 	builder := strings.builder_make(context.temp_allocator)
@@ -20,6 +20,8 @@ generate_name :: proc(syllables_count:int, allocator:=context.temp_allocator) ->
 			}
 		}
 	}
+
+	strings.write_string(&builder, "♂" if sex == male else "♀" if sex == female else "")
 
 	ret := strings.to_string(builder)
 	return strings.to_pascal_case(ret, allocator)

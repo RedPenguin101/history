@@ -62,11 +62,26 @@ Iteration 10
 Better succession: English rules, walk the tree. There's still a bug
 in this, needs improvement.
 
+Iteration 11
+------------
+
+When a civilization is created, 3-5 elite houses are created. To
+create a house, a founder member is generated between 50 and 100
+years before the civs founding, and the family tree run forward to the
+civ founding year. Each house has a head, which starts with the
+founder and is inherited on death. One of the houses becomes the
+ruling family of the civ.
+
+The civ founding message looks like this:
+
+> The civilization [name] emerged in year [year]. It numbered [pop]
+> people. The civilization was ruled by house [ruling house name]. The
+> houses of [other house names] were also prominent at this time.
+
 In short
 --------
 
 - Family trees for characters, marriage, children
-- families should build up catalogs of given names, which are more likely to be reused when naming children
 - Elite families
 - Religions and priestly casts
 - Multiple civilizations
