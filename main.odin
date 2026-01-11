@@ -177,10 +177,9 @@ main :: proc()
 	}
 
 	for house in global.houses[1:] {
-		l, t := descendents(house.founder_idx)
 		fmt.printfln("after %d years, house %s has %d living members (%d total)",
 			SIM_YEARS,
 			global.family_names[house.house_name],
-			l, t)
+			house.living_members, house.total_members)
 	}
 }

@@ -20,6 +20,7 @@ Character :: struct
 	family					: int,
 	birth_year              : int,
 	alive					: bool,
+	death_year              : int,
 	sex						: int,
 	spouse, mother, father	: int,
 	children				: [dynamic]int,
@@ -44,6 +45,9 @@ create_character :: proc(birth_year, sex, mother, father:int, family:=0, name:=0
 		char.given_name = rand.int_max(len(global.given_names[sex]))
 	}
 	append(&global.characters, char)
+	global.houses[family].living_members += 1
+	global.houses[family].total_members += 1
+
 	return idx
 }
 
@@ -79,9 +83,18 @@ find_or_create_suitable_mate :: proc(this:Character, year:int) -> int
 		is_fertile := other_age < FERTILITY_END && other_age > FERTILITY_START
 
 		if is_fertile do score += 20
-		// lower house scores are better - except zero is no house
-		score += 0 if other.family == 0 else f32(house_count-other.family)+2
-		if other.family == this.family do score -= 2
+
+		// The highest prominance house that is LOWER than yours is best, because children
+		// born of the marriage belong to the highest prominance house
+
+		// e.g. if this.family = 3, the ideal other.family is 4 (the next most prominent house).
+		// 5 is slightly less preferable. 2 is less preferable than that, because the children
+		// won't be of your house
+
+		family_delta := other.family - this.family
+		if other.family == 0 do score += 0
+		else if this.family > other.family do score += 0 // don't want to marry into more prominant house
+		else do f32(house_count-other.family+1)
 
 		el.idx = idx; el.score = score
 		append(&candidates, el)
@@ -157,6 +170,7 @@ create_child :: proc(mother, father, year, day: int) -> int {
 	father_fam := global.characters[father].family
 	fam : int
 
+	// The family of the child is the most prominant house of the parents.
 	if mother_fam == 0 {
 		fam = father_fam
 	} else if father_fam == 0 {
@@ -240,6 +254,38 @@ find_inheritor :: proc(char_idx:int, ignore:=0) -> int
 	return inheritor
 }
 
+character_death :: proc(idx,year:int)
+{
+	char := &global.characters[idx]
+	char.alive = false
+	char.death_year = year
+	if .IsMarried in char.attributes {
+		spouse := &global.characters[char.spouse]
+		spouse.spouse = 0
+		spouse.attributes -= {.IsMarried}
+	}
+
+	// reduce number of house members, pick new house head if char was house head
+
+	house := &global.houses[char.family]
+	house.living_members -= 1
+
+	if house.current_head == idx {
+		inheritor := find_house_head(char.family)
+		house.current_head = inheritor
+		event := Event{
+			type = .BecameFamilyHead,
+			int1 = char.family,
+			char1 = inheritor,
+			char2 = idx,
+			year = year,
+			// TODO: Maybe move this thing out, not great to be creating events here should be in main loop
+			day = 0,
+		}
+		append(&global.character_events, event)
+	}
+}
+
 characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 {
 	event_start := len(global.character_events)
@@ -250,6 +296,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 
 		char_age := year - char.birth_year
 
+		// MARRIAGE EVENT
 		if char.family > 0 && .IsMarried not_in char.attributes && char_age >= FERTILITY_START && char_age < FERTILITY_END
 		{
 			new_spouse_idx := find_or_create_suitable_mate(char, year)
@@ -281,6 +328,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 
 		if day_of_year == 0
 		{
+			// CHILD EVENT
 			// Determine if the character has children this year.
 			// There's a 10% chance whenever both partners in a
 			// marriage are fertile
@@ -301,14 +349,8 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 			assert(char_age < len(DEATH_RATE))
 			death_prob := DEATH_RATE[char_age]
 			roll := rand.float32()
-			if roll < death_prob
-			{
-				global.characters[i].alive = false
-				if .IsMarried in char.attributes {
-					spouse := &global.characters[char.spouse]
-					spouse.spouse = 0
-					spouse.attributes -= {.IsMarried}
-				}
+			if roll < death_prob {
+				character_death(i, year)
 				event := Event{
 					type = .Death,
 					char1 = char.idx,
@@ -316,21 +358,6 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 					day = day_of_year,
 				}
 				append(&global.character_events, event)
-
-				if global.houses[char.family].current_head == i {
-					house := global.houses[char.family]
-					inheritor := find_house_head(char.family)
-					global.houses[char.family].current_head = inheritor
-					event := Event{
-						type = .BecameFamilyHead,
-						int1 = char.family,
-						char1 = inheritor,
-						char2 = i,
-						year = year,
-						day = day_of_year,
-					}
-					append(&global.character_events, event)
-				}
 			}
 		}
 	}
@@ -345,25 +372,28 @@ House :: struct
 	house_name   : int,
 	founder_idx  : int,
 	current_head : int,
+	total_members : int,
+	living_members : int,
 }
 
 create_house :: proc(start_year:int) -> int
 {
 	house_idx := len(global.houses)
 	house_name_idx := len(global.family_names)
+
+	house := House {
+		house_name = house_name_idx,
+	}
+	append(&global.houses, house)
+
 	house_name := generate_name(rand.int_range(3,6), 0, string_allocator)
 	append(&global.family_names, house_name)
 
 	founder_sex := rand.int_range(1,3)
 	founder_idx := create_character(start_year, founder_sex, 0, 0, house_idx, house_name_idx)
 
-	house := House {
-		house_name = house_name_idx,
-		founder_idx = founder_idx,
-		current_head = founder_idx,
-	}
-
-	append(&global.houses, house)
+	global.houses[house_idx].founder_idx = founder_idx
+	global.houses[house_idx].current_head = founder_idx
 
 	return house_idx
 }

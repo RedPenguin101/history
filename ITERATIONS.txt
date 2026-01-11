@@ -65,9 +65,6 @@ in this, needs improvement.
 Iteration 11
 ------------
 
-- marriages between elite families
-- random number of elite houses created
-
 When a civilization is created, 3-5 elite houses are created. To
 create a house, a founder member is generated between 50 and 100
 years before the civs founding, and the family tree run forward to the
