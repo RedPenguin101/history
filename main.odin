@@ -86,8 +86,9 @@ main :: proc()
 	append(&global.houses, House{}) // Null House
 	append(&global.civs, new_civ())
 	civ := &global.civs[0]
+	houses := rand.int_range(5,10)
 
-	for _ in 0..<5 {
+	for _ in 0..<houses {
 		idx := create_house(-25)
 		house := global.houses[idx]
 	}
@@ -128,7 +129,7 @@ main :: proc()
 			for day in 0..<DAYS_IN_YEAR {
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
-					/* printfln("In %d, %v", year, event_description(ch_env)) */
+					printfln("In %d, %v", year, event_description(ch_env))
 					if ch_env.type == .Death && ch_env.char1 == civ.ruler_idx {
 						// The current ruler has died, select a new one
 						old_ruler := civ.ruler_idx
@@ -170,7 +171,7 @@ main :: proc()
 			}
 			civ_plus_1_year(civ, year)
 			for event in civ.event_history[year] {
-				/* printfln("In %d, %v", year, event_description(event)) */
+				printfln("In %d, %v", year, event_description(event))
 			}
 		}
 	}
