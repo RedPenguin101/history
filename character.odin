@@ -56,25 +56,50 @@ character_name :: proc(idx:int) -> string
 
 find_or_create_suitable_mate :: proc(this:Character, year:int) -> int
 {
-	candidate := 0
+	/* This routine tries to find candidates for marriage. The
+	preferred candidate for marriage is not already married, not
+	closely related, in another house, and fertile */
 
-	for other in global.characters
+	candidates := make([dynamic]struct{idx:int,score:f32}, context.temp_allocator)
+	el : struct{idx:int,score:f32}
+	total_score:f32 = 0.0
+	candidate := 0
+	house_count := len(global.houses)
+
+	for other, idx in global.characters
 	{
-		other_age := year-other.birth_year
-		if !other.alive do continue
-		if other.idx == this.idx do continue
-		if other.sex == this.sex do continue
-		if other_age < FERTILITY_START do continue
-		if other_age > FERTILITY_END do continue
-		if other.father == this.father do continue
-		if other.mother == this.mother do continue
+		score:f32 = 0.0
+
+		// Disqualifying criteria
+		if !other.alive || other.idx == this.idx || other.sex == this.sex do continue
+		if other.father == this.father || other.mother == this.mother do continue
 		if .IsMarried in other.attributes do continue
 
-		candidate = other.idx
-	}
-	if candidate > 0 do return candidate
+		other_age := year-other.birth_year
+		is_fertile := other_age < FERTILITY_END && other_age > FERTILITY_START
 
-	// If no candidate exists, create one
+		if is_fertile do score += 20
+		// lower house scores are better - except zero is no house
+		score += 0 if other.family == 0 else f32(house_count-other.family)+2
+		if other.family == this.family do score -= 2
+
+		el.idx = idx; el.score = score
+		append(&candidates, el)
+		total_score += score
+	}
+
+	if len(candidates) > 0 {
+		roll := rand.float32()
+
+		acc:f32 = 0
+		for el in candidates {
+			n_score := el.score/total_score + acc
+			if n_score > roll do return el.idx
+			acc += el.score/total_score
+		}
+	}
+
+	// If no candidate exists, create one from commoners
 
 	age := rand.int_range(FERTILITY_START, FERTILITY_END)
 	birth_year := year - age
