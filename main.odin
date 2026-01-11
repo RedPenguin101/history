@@ -28,6 +28,8 @@ global : struct {
 
 main :: proc()
 {
+	/* PRELUDE AND MEMORY ADMIN */
+
 	context.logger = log.create_console_logger()
 	context.logger.lowest_level = .Warning
 	defer log.destroy_console_logger(context.logger)
@@ -80,10 +82,16 @@ main :: proc()
 		delete(global.given_names[2])
 	}
 
+	/* STATE SETUP */
 
 	append(&global.family_names, "(commoner)")
 	append(&global.characters, Character{}) // Null character
 	append(&global.houses, House{}) // Null House
+
+	/* THE PROGRAM */
+
+	SIM_CHARACTERS :: false
+
 	append(&global.civs, new_civ())
 	civ := &global.civs[0]
 	houses := rand.int_range(5,10)
@@ -124,8 +132,8 @@ main :: proc()
 	append(&global.character_events, became_ruler)
 	printfln("In 0, %v", event_description(became_ruler))
 
-	if true {
-		for year in 0..<SIM_YEARS {
+	for year in 0..<SIM_YEARS {
+		if SIM_CHARACTERS {
 			for day in 0..<DAYS_IN_YEAR {
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
@@ -169,17 +177,19 @@ main :: proc()
 					}
 				}
 			}
-			civ_plus_1_year(civ, year)
-			for event in civ.event_history[year] {
-				printfln("In %d, %v", year, event_description(event))
-			}
+		}
+		civ_plus_1_year(civ, year)
+		for event in civ.event_history[year] {
+			printfln("In %d, %v", year, event_description(event))
 		}
 	}
 
-	for house in global.houses[1:] {
-		fmt.printfln("after %d years, house %s has %d living members (%d total)",
-			SIM_YEARS,
-			global.family_names[house.house_name],
-			house.living_members, house.total_members)
+	if SIM_CHARACTERS {
+		for house in global.houses[1:] {
+			fmt.printfln("after %d years, house %s has %d living members (%d total)",
+				SIM_YEARS,
+				global.family_names[house.house_name],
+				house.living_members, house.total_members)
+		}
 	}
 }

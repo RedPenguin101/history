@@ -153,6 +153,7 @@ In short
 - Name generation should be done based on standard phoenetic symbols, not on latin letters. Then, translate them to latin letters (or another literation system)
 - Longer term: Given names should be tracked at the civ level, and change in popularity over time.
 - Better house creation: a founder member is generated between 50 and 100 years before the founding, and the family tree run forward to the civ founding year.
+- UI: browser for civs, events, family trees.
 
 Small Changes, refactors
 ------------------------
