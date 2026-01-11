@@ -86,6 +86,15 @@ family, only marrying a commoner if there are no available candidates.
 Iteration 12 - settlements
 --------------------------
 
+- Settlement construct with population and farm% 100
+- Settlement Annual calculation of surplus based on yield% and rand
+- Settlement grows unless there is a deficit
+- Surplus is stored, and used to cover deficits
+- Surplus penalties based on absolute size of surplus
+- Accumulated surplus penalty based on absolute size
+- Establishment of management class when optimal to do so
+- Management class size grows and shrinks over time to (partially) optimize
+
 A civilization starts with a single named settlement, with a tracked
 population. The larger the population of the settlement, the more food
 it needs. The settlement has a percentage of the population focused on
@@ -129,15 +138,6 @@ production.
 The managerial class produces the elites: families ("houses") that
 maintain their influence over the generations, and compete with the
 other houses for power.
-
-- Settlement construct with population and farm% 100
-- Settlement Annual calculation of surplus based on yield% and rand
-- Settlement grows unless there is a deficit
-- Surplus is stored, and used to cover deficits
-- Surplus penalties based on absolute size of surplus
-- Accumulated surplus penalty based on absolute size
-- Establishment of management class when optimal to do so
-- Management class size grows and shrinks over time to (partially) optimize
 
 In short
 --------

@@ -24,6 +24,7 @@ global : struct {
 	given_names			: [3][dynamic]string,
 	family_names		: [dynamic]string,
 	civs				: [dynamic]Civilization,
+	settlements         : [dynamic]Settlement,
 }
 
 main :: proc()
@@ -76,6 +77,8 @@ main :: proc()
 			}
 		}
 		delete(global.civs)
+		delete(global.settlements)
+
 		delete(global.houses)
 		delete(global.family_names)
 		delete(global.given_names[1])
@@ -87,10 +90,13 @@ main :: proc()
 	append(&global.family_names, "(commoner)")
 	append(&global.characters, Character{}) // Null character
 	append(&global.houses, House{}) // Null House
+	append(&global.settlements, Settlement{})
 
 	/* THE PROGRAM */
 
 	SIM_CHARACTERS :: false
+
+	new_settlement()
 
 	append(&global.civs, new_civ())
 	civ := &global.civs[0]
@@ -131,6 +137,8 @@ main :: proc()
 
 	append(&global.character_events, became_ruler)
 	printfln("In 0, %v", event_description(became_ruler))
+
+	/* LOOP */
 
 	for year in 0..<SIM_YEARS {
 		if SIM_CHARACTERS {
@@ -177,6 +185,10 @@ main :: proc()
 					}
 				}
 			}
+		}
+		for s_idx in 1..<len(global.settlements)
+		{
+			tick_settlement_year(s_idx)
 		}
 		civ_plus_1_year(civ, year)
 		for event in civ.event_history[year] {
