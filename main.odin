@@ -140,6 +140,8 @@ main :: proc()
 
 	/* LOOP */
 
+	/* test_collection_loss() */
+
 	for year in 0..<SIM_YEARS {
 		if SIM_CHARACTERS {
 			for day in 0..<DAYS_IN_YEAR {

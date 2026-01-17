@@ -86,12 +86,6 @@ family, only marrying a commoner if there are no available candidates.
 Iteration 12 - settlements
 --------------------------
 
-- Settlement construct with population and farm% 100
-- Settlement Annual calculation of surplus based on yield% and rand
-- Settlement grows unless there is a deficit
-- Surplus is stored, and used to cover deficits
-- Surplus penalties based on absolute size of surplus
-- Accumulated surplus penalty based on absolute size
 - Establishment of management class when optimal to do so
 - Management class size grows and shrinks over time to (partially) optimize
 
@@ -161,3 +155,47 @@ Small Changes, refactors
 - Different birth / death rates for males and females.
 - Adjust birth / death rates to be more like medieval europe
 - From above, check that population doesn't explode too badly
+
+Surplus function is not good. If x = produced and y = collected, y
+should be pretty much equal to x for small x. Then the penalty should
+progressively increase as x increases, until it asymptotically
+approaches y=Y_MAX.
+
+P = total population
+
+x = food produced
+f = proportion of population dedicated to farming
+n = agricultural productivity: the amount of food (in fed-person units) a single farmer can produce
+
+y = amount collected
+
+CAP_0 = 1000 : the maximum amount of food that can be collected without any dedicated collection infrastructure.
+a = admin effectiveness. The additional amount of food that can be collected by each manager
+m = proportion of population dedicated to management/collection
+M = mP: the amount of managers in absolute terms
+
+capM = cap(M) = aM+CAP_0 : The actual maximum amount of food that can be collected
+
+x = Pfe
+
+Y = amP+B
+x = fnP
+y = Y*(1-e^(-x/Y))
+y = (amP+B)*(1-e^(-fnP/(amP+B)))
+
+y = (amx+B)*(1-e^(-fnx/(amx+B)))
+
+y = (amx+B)*(1-e^(-fnx/(amx+B)))
+
+$$
+y=\left(amx+1000\right)\ \left(1-e^{\frac{-fnx}{amx+1000}}\right)
+$$
+
+Stick a 3 in there, bit of the fudge. Means production will start to
+decrease at around m=0.2, which feels about right
+
+y = (Amx+B)*(1-e^(-Nfx/(3Amx+B)))
+
+A = 5
+N = 1.1
+B = 1000
