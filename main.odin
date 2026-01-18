@@ -3,6 +3,7 @@ package history
 import "core:fmt"
 printfln :: fmt.printfln
 tprintf :: fmt.tprintf
+println :: fmt.println
 import "core:mem"
 import "core:log"
 DEBUG :: log.debug

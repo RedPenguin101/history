@@ -38,40 +38,36 @@ new_settlement :: proc() -> int
 
 test_collection_loss :: proc()
 {
-	A:f32 = 2.0 // Admin efficiency
-	B:f32 = 100 // 
-	N:f32 = 1.1
-	m:f32 = 0.0
-	f:f32 = 1-m
-	FUDGE :: 1.0
-
-	test_pops := [?]f32{
-		10, 100, 1000, 2000, 3000, 4000, 5000, 6000, 10000
-
+	calc :: proc(x, k: f32) -> f32
+	{
+		return k * (1 - math.exp(-x / k))
 	}
 
-	test_ms := [?]f32{ 0.0, 0.01, 0.05, 0.1, 0.3, 0.7, 1.0}
+	// Food produced is p = 1.1F (where F is the number of farmers)
+	// Surplus is       s = p-x
+	// Collected is     c = b(1-e^s/b)
+	// b is maximum amount that can be collected, which is the
+	// base  + 10√M (where M is the number of managers)
 
-	for x in test_pops
-	{
-		DEBUG("POP:", x)
-		baseline : f32
-		for m in test_ms
-		{
-			f := 1-m
-			produced := N*f*x
-			surplus := produced - x
-			if surplus > 0 {
-				collected := (A*m*x + B) * (1-math.exp(-surplus/(FUDGE*A*m*x + B)))
-				if m == 0.0 do baseline = collected
+	pops := [?]f32{100, 250, 500, 750, 1000, 2000, 4000, 8000, 16000, 32000, 64000, 100000}
+	mans := [?]f32{0, 0.01, 0.02, 0.03, 0.04, 0.05, 0.06, 0.07, 0.08, 0.09, 0.10, 0.2, 0.4, 0.5}
+	BASE:f32= 50
 
-				DEBUG("m", int(100*m), "%",
-					"surp", int(surplus),
-					"coll", int(collected),
-					"loss", int(100*(surplus-collected)/surplus), "%",
-					"base", int(100*(collected-baseline)/baseline), "%")
+	for population in pops {
+		for m in mans {
+			managers := m*population
+			farmers := (1-m)*population
+			produced := 1.1*farmers
+			surplus := produced - population
+			if surplus < 0 {
+				printfln("Mng: %4d\t Pop: %d\t Surp: %d\t DEFICIT",
+					int(managers), int(population), int(surplus))
 			} else {
-				DEBUG("m", int(100*m), "deficit")
+				b := BASE+10.0*math.sqrt(managers)
+				collected := calc(surplus, b)
+				printfln("Mng: %4d\t Pop: %d\t Surp: %d\t b: %d\t coll: %d\t loss: %d",
+					int(managers), int(population), int(surplus), int(b), int(collected),
+					int(100*(surplus-collected)/surplus))
 			}
 		}
 	}
@@ -82,79 +78,78 @@ tick_settlement_year :: proc(idx:int)
 	/* DEBUG("TICKING", idx) */
 	settlement := &global.settlements[idx]
 
-	if settlement.surplus > 0 {
-		unspoiled := math.pow(settlement.surplus, 1/SURP_STORE_PEN_COEFF)
-		spoilage := settlement.surplus - unspoiled
-		/* DEBUG("start surp", settlement.surplus) */
-		/* DEBUG(int(100*(spoilage/settlement.surplus)), "% of stored surplus spoiled.") */
-		settlement.surplus -= spoilage
-		/* DEBUG("end surp", settlement.surplus) */
+	calc :: proc(x, k: f32) -> f32
+	{
+		return k * (1 - math.exp(-x / k))
 	}
 
-	// Formula for food collected is
-	//// y = (Amx+B)*(1-e^(-Nfx/(3Amx+B)))
-	// where x is population, m is proportion of managers, n, f is proportion of farmers
-	// A = admin efficiency, B = base collection cap, N = yield
+	// Food produced is p = 1.1F (where F is the number of farmers)
+	// Surplus is       s = p-x
+	// Collected is     c = b(1-e^s/b)
+	// b is maximum amount that can be collected, which is the
+	// base  + 10√M (where M is the number of managers)
 
-	A:f32 = 0.1
-	B:f32 = 50.0
-	N := rand.float32_normal(AGRI_YIELD_MEAN, AGRI_YIELD_SD)
-	m := settlement.job_allocation[.Manager]
-	f := settlement.job_allocation[.Farmer]
-	x := f32(settlement.population)
-	FUDGE :: 1.0
+	yield:f32 = rand.float32_normal(1.1, 0.2)
+	/* DEBUG("YIELD", yield) */
+	population := f32(settlement.population)
+	farmers := population * settlement.job_allocation[.Farmer]
+	managers := population * settlement.job_allocation[.Manager]
 
-	produced := N*f*x
-	surplus := produced - x
-	/* DEBUG("yield", int(100*N), "% produced", int(produced), "surplus", int(surplus)) */
+	BASE :: 20.0
+	XTRA_COLL_PER_MGR :: 8
+	b_calc :: proc(managers:f32) -> f32 {
+		return BASE + managers*XTRA_COLL_PER_MGR
+	}
+
+	produced := farmers * yield
+	surplus := produced - population
 	is_deficit := surplus < 1
 
 	if is_deficit {
 		deficit := -surplus
+		deaths:f32 = 0
 		if settlement.surplus > deficit {
 			settlement.surplus -= deficit
-			/* DEBUG("covered deficit") */
 		} else {
-			deaths := (deficit-settlement.surplus)
+			deaths = (deficit-settlement.surplus)
 			settlement.surplus = 0
 			settlement.population -= int(deaths)
-			/* DEBUG("uncovered deficit,", int(deaths), "die") */
-			// TODO: Managers don't die, only farmers
+			/* TODO: Managers don't die, only farmers */
 		}
+		/* printfln("Mng: %4d\t Pop: %d\t Surp: %4d (%4d)\t DEFICIT deaths %d", */
+			/* int(managers), int(population), int(surplus), int(settlement.surplus), int(deaths)) */
 	} else {
-		collected := (A*m*x + B) * (1-math.exp(-surplus/(FUDGE*A*m*x + B)))
-		/* DEBUG("coll", collected, "loss", int(100*(surplus-collected)/surplus), "%") */
+		b := b_calc(managers)
+		collected := calc(surplus, b)
 
 		settlement.surplus += collected
 		growth_percent := rand.float32_normal(GROWTH_RATE_MEAN, GROWTH_RATE_SD) / 100
-		/* DEBUG("Growth %", growth_percent*100) */
-		new_pop := int(f32(settlement.population)*(1+growth_percent))
-		settlement.population = new_pop
+		net_births := population * growth_percent
 
-		m2 := m+0.01
-		f2 := f-0.01
-		hypo_surp := (N*f2*x) - x
-		hypo_coll := (A*m2*x + B) * (1-math.exp(-hypo_surp/(FUDGE*A*m2*x + B)))
-		if hypo_coll > collected {
-			DEBUG("ASSIGNING MANAGERS, now", int(100*m2), "% managers", int(f32(settlement.population)*m2), "total")
-			settlement.job_allocation[.Farmer] = f2
-			settlement.job_allocation[.Manager] = m2
-		}
+		settlement.population += int(net_births)
+		settlement.job_allocation[.Farmer] = (farmers+net_births)/(population+net_births)
+		settlement.job_allocation[.Manager] = (managers)/(population+net_births)
 
-		if m > 0 {
-			m3 := m-0.01
-			f3 := f+0.01
-			hypo_surp := (N*f3*x) - x
-			hypo_coll := (A*m3*x + B) * (1-math.exp(-hypo_surp/(FUDGE*A*m3*x + B)))
-			if hypo_coll > collected {
-				DEBUG("DEASSIGNING MANAGERS, now", int(100*m3), "% managers", int(f32(settlement.population)*m3), "total")
-				settlement.job_allocation[.Farmer] = f3
-				settlement.job_allocation[.Manager] = m3
+		/* printfln("Mng: %4d\t Pop: %d\t Surp: %4d (%4d)\t coll: %d\t loss: %d", */
+		/* 	int(managers), int(population), int(surplus), int(settlement.surplus), int(collected), */
+		/* 	int(100*(surplus-collected)/surplus)) */
+
+		ADJUST :: true
+		if ADJUST {
+			DELTA :: 0.001
+			m_delta := population * DELTA
+			farmers -= m_delta
+			managers += m_delta
+			produced = farmers * yield
+			surplus = produced - population
+			b = b_calc(managers)
+
+			new_collected := calc(surplus, b)
+			/* println("\tM_delta", int(m_delta), "new surp", int(surplus), "new coll", int(new_collected)) */
+			if int(m_delta) >= 1 && new_collected > collected {
+				settlement.job_allocation[.Manager] += DELTA
+				settlement.job_allocation[.Farmer] -= DELTA
 			}
 		}
-
-		DEBUG("p", int(settlement.population), "s", int(surplus), "M+1% delta", int(100*(hypo_coll-collected)/collected), "%")
 	}
-
-	/* DEBUG("new pop", settlement.population, "new surp", int(settlement.surplus), "coverage", int(f32(settlement.surplus)/f32(settlement.population)*100),"%") */
 }

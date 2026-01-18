@@ -86,9 +86,6 @@ family, only marrying a commoner if there are no available candidates.
 Iteration 12 - settlements
 --------------------------
 
-- Establishment of management class when optimal to do so
-- Management class size grows and shrinks over time to (partially) optimize
-
 A civilization starts with a single named settlement, with a tracked
 population. The larger the population of the settlement, the more food
 it needs. The settlement has a percentage of the population focused on
