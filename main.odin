@@ -58,32 +58,28 @@ main :: proc()
 	}
 
 	string_allocator = vmem.arena_allocator(&string_arena)
-	for _ in 0..<10 {
-		append(&global.given_names[male], generate_name(rand.int_range(2, 6), male, string_allocator))
-		append(&global.given_names[female], generate_name(rand.int_range(2, 6), female, string_allocator))
-	}
+
+	/* Memory Cleanup */
 
 	defer {
 		vmem.arena_destroy(&string_arena)
 
-		for c in global.characters {
-			delete(c.children)
-		}
 		delete(global.characters)
 		delete(global.character_events)
-
-		for civ in global.civs {
-			for events in civ.event_history {
-				delete(events)
-			}
-		}
+		delete(global.houses)
+		delete(global.family_names)
 		delete(global.civs)
 		delete(global.settlements)
 
-		delete(global.houses)
-		delete(global.family_names)
-		delete(global.given_names[1])
-		delete(global.given_names[2])
+		for i in 0..<3 {
+			delete(global.given_names[i])
+		}
+	}
+
+	/* GENERATE INITIAL GIVEN NAMES */
+	for _ in 0..<10 {
+		append(&global.given_names[male], generate_name(rand.int_range(2, 6), male, string_allocator))
+		append(&global.given_names[female], generate_name(rand.int_range(2, 6), female, string_allocator))
 	}
 
 	/* STATE SETUP */
