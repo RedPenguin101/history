@@ -23,15 +23,18 @@ Settlement :: struct
 	population:int,
 	job_allocation:[Job]f32,
 	surplus:f32,
+	civilization:int,
+	name:string,
 }
 
-new_settlement :: proc() -> int
+new_settlement :: proc(civ:int, name:string) -> int
 {
 	idx := len(global.settlements)
 	s : Settlement
+	s.civilization = civ
+	s.name = name
 	s.population = rand.int_range(400, 1000)
 	s.job_allocation = {.Farmer=1.0, .Manager=0.0}
-	DEBUG("created settlement", idx, "with pop", s.population)
 	append(&global.settlements, s)
 	return idx
 }

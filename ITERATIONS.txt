@@ -86,9 +86,6 @@ family, only marrying a commoner if there are no available candidates.
 Iteration 12 - settlements
 --------------------------
 
-- Tie together settlements and civilisations
-- Managers make distribution of surplus in deficit years more effective
-
 A civilization starts with a single named settlement, with a tracked
 population. The larger the population of the settlement, the more food
 it needs. The settlement has a percentage of the population focused on
@@ -114,9 +111,31 @@ but will result in a larger surplus production as settlements grow,
 because the storage penalties scale faster than the actual surplus
 production.
 
+Iteration 13 - Industry
+-----------------------
+
+In addition to food, and provided they have access to wool producing
+animals, farmers produce wool. Wool can be spun into cloth which can
+in turn be used to make clothes. These are the most basic industries.
+
+Industries take three principal forms:
+
+- cottage industries, where work is done by individuals in their own homes,
+  and the individuals keep the products of their labor for their own use
+  and for trading.
+- capitalist industries, where the work is done by laborers in exchange for
+  wages, and the provider of capital purchases raw materials and gains profit
+  on the sale.
+- state industries. I don't really know how these will work
+
+Iteration 14 - Trade
+--------------------
+
 In short
 --------
 
+- Accumulation of capital, factory systems
+- Managers make distribution of surplus in deficit years more effective
 - Degradation of accumulated surplus
 - Nomad raiders require development of protection in the form of walls and militias
 - Civilization has settlements with individual populations

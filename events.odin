@@ -37,7 +37,7 @@ event_description :: proc(ce:Event) -> string
 					character_name(ce.char2), global.family_names[ce.int1])
 			} else {
 				char := global.characters[ce.char1]
-				return tprintf("%s %s became head of house %s at the age of %d, suceeding %s.",
+				return tprintf("%s %s became head of house %s at the age of %d, succeeding %s.",
 					character_name(ce.char1),
 					global.family_names[char.family],
 					global.family_names[ce.int1],

@@ -20,7 +20,7 @@ DAYS_IN_YEAR :: 336
 
 global : struct {
 	characters			: [dynamic]Character,
-	character_events	: [dynamic]Event,
+	events	: [dynamic]Event,
 	houses              : [dynamic]House,
 	given_names			: [3][dynamic]string,
 	family_names		: [dynamic]string,
@@ -65,7 +65,7 @@ main :: proc()
 		vmem.arena_destroy(&string_arena)
 
 		delete(global.characters)
-		delete(global.character_events)
+		delete(global.events)
 		delete(global.houses)
 		delete(global.family_names)
 		delete(global.civs)
@@ -84,67 +84,38 @@ main :: proc()
 
 	/* STATE SETUP */
 
+	append(&global.civs, Civilization{})
 	append(&global.family_names, "(commoner)")
 	append(&global.characters, Character{}) // Null character
 	append(&global.houses, House{}) // Null House
-	append(&global.settlements, Settlement{})
+	append(&global.settlements, Settlement{}) // Null settlement
 
 	/* THE PROGRAM */
 
-	SIM_CHARACTERS :: false
+	SIM_CHARACTERS :: true
 
-	new_settlement()
+	ruling_house_idx := create_house(-25)
+	ruling_house := global.houses[ruling_house_idx]
 
-	append(&global.civs, new_civ())
-	civ := &global.civs[0]
-	houses := rand.int_range(5,10)
+	initial_civ_name := generate_name(3, 0, string_allocator)
+	civ_idx := new_civ(initial_civ_name, ruling_house_idx, ruling_house.current_head)
+	civ := &global.civs[civ_idx]
 
-	for _ in 0..<houses {
-		idx := create_house(-25)
-		house := global.houses[idx]
-	}
+	stl_idx := new_settlement(civ_idx, initial_civ_name)
+	settlement := global.settlements[stl_idx]
 
-	ruling_house := global.houses[1]
-
-	fmt.printfln("The civilization [name] emerged in the year 0. It numbered %d people", civ.population)
-	fmt.printfln("It was ruled by %s of house %s.", character_name(ruling_house.current_head), global.family_names[ruling_house.house_name])
-	fmt.print("The houses of ")
-	for house, i in global.houses[2:] {
-		if i < len(global.houses)-4
-		{
-			fmt.printf("%s, ", global.family_names[house.house_name])
-		}
-		else if i == len(global.houses)-4 {
-			fmt.printf("%s and ", global.family_names[house.house_name])
-		} else {
-			fmt.printf("%s ", global.family_names[house.house_name])
-		}
-	}
-	fmt.printfln("were also prominant.")
-
-	civ.ruler_house = 1
-	civ.ruler_idx = ruling_house.current_head
-
-	became_ruler := Event{
-		type = .BecameRuler,
-		char1 = ruling_house.current_head,
-		int1 = 1,
-		year = 0, day = 0,
-	}
-
-	append(&global.character_events, became_ruler)
-	printfln("In 0, %v", event_description(became_ruler))
+	println("Behold! The new civilization of", initial_civ_name, "comes into being.")
+	println("Ruled by", character_name(ruling_house.current_head), "of the house of", global.family_names[ruling_house.house_name])
+	println("The town of", settlement.name, "has", settlement.population, "people")
 
 	/* LOOP */
-
-	/* test_collection_loss() */
 
 	for year in 0..<SIM_YEARS {
 		if SIM_CHARACTERS {
 			for day in 0..<DAYS_IN_YEAR {
 				char_events := characters_sim_loop(year, day)
 				for ch_env in char_events {
-					printfln("In %d, %v", year, event_description(ch_env))
+					printfln("In the year %d, %v", year, event_description(ch_env))
 					if ch_env.type == .Death && ch_env.char1 == civ.ruler_idx {
 						// The current ruler has died, select a new one
 						old_ruler := civ.ruler_idx
@@ -178,9 +149,6 @@ main :: proc()
 							char2 = old_ruler, int2 = old_house,
 							year = year, day = day,
 						}
-
-						append(&civ.event_history[year], became_ruler)
-
 					}
 				}
 			}
@@ -188,11 +156,10 @@ main :: proc()
 		for s_idx in 1..<len(global.settlements)
 		{
 			tick_settlement_year(s_idx)
+			s := global.settlements[s_idx]
+			println("At the end of year", year, "the settlement of", s.name, "had", s.population, "people")
 		}
-		civ_plus_1_year(civ, year)
-		for event in civ.event_history[year] {
-			printfln("In %d, %v", year, event_description(event))
-		}
+		free_all(context.temp_allocator)
 	}
 
 	if SIM_CHARACTERS {

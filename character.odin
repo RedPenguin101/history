@@ -193,7 +193,7 @@ create_child :: proc(mother, father, year, day: int) -> int {
 
 	append(&global.characters[father].children, baby_idx)
 	append(&global.characters[mother].children, baby_idx)
-	append(&global.character_events, event)
+	append(&global.events, event)
 	return baby_idx
 }
 
@@ -282,13 +282,13 @@ character_death :: proc(idx,year:int)
 			// TODO: Maybe move this thing out, not great to be creating events here should be in main loop
 			day = 0,
 		}
-		append(&global.character_events, event)
+		append(&global.events, event)
 	}
 }
 
 characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 {
-	event_start := len(global.character_events)
+	event_start := len(global.events)
 	// Represents a single iterations. Probably there will be one allowed act per day, or 28*12=336 per year
 	for char, i in global.characters
 	{
@@ -323,7 +323,7 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 				int1 = char_old_family,
 				int2 = spouse_old_family,
 			}
-			append(&global.character_events, event)
+			append(&global.events, event)
 		}
 
 		if day_of_year == 0
@@ -357,12 +357,12 @@ characters_sim_loop :: proc(year, day_of_year:int) -> []Event
 					year = year,
 					day = day_of_year,
 				}
-				append(&global.character_events, event)
+				append(&global.events, event)
 			}
 		}
 	}
-	event_end := len(global.character_events)
-	return global.character_events[event_start:event_end]
+	event_end := len(global.events)
+	return global.events[event_start:event_end]
 }
 
 /* HOUSES */
