@@ -3,9 +3,6 @@ package history
 import "core:math/rand"
 import "core:math"
 
-AGRI_YIELD_MEAN :: 1.02
-AGRI_YIELD_SD :: 0.04
-
 GROWTH_RATE_MEAN :: 5 // percent
 GROWTH_RATE_SD :: 3 // percent
 
@@ -18,11 +15,31 @@ Job :: enum
 	Farmer, Manager,
 }
 
+Yield :: struct {
+	job:Job, mean, sd:f32
+}
+
+Product :: enum
+{
+	Food,
+	Wool,
+	Cloth,
+	Clothes,
+}
+
+// mean and standard deviation of item produced by 1 individual
+yields := [Product]Yield {
+	.Food = {.Farmer, 1.02, 0.04}, // output measured in fed-person/year
+	.Wool = {.Farmer, 0.1, 0.001},
+	.Cloth = {.Farmer, 0, 0},
+	.Clothes = {.Farmer, 0, 0},
+}
+
 Settlement :: struct
 {
 	population:int,
 	job_allocation:[Job]f32,
-	surplus:f32,
+	inventory:[Product]f32,
 	civilization:int,
 	name:string,
 }
@@ -44,8 +61,8 @@ tick_settlement_year :: proc(idx:int)
 	BASE_COLL_MAX :: 20.0
 	XTRA_COLL_PER_MGR :: 8
 
-	YIELD_MEAN :: 1.1
-	YIELD_SD :: 0.2
+	yield_mean := yields[.Food].mean
+	yield_sd := yields[.Food].sd
 
 	M_ADJUST_DELTA :: 0.001
 
@@ -61,7 +78,7 @@ tick_settlement_year :: proc(idx:int)
 
 	settlement := &global.settlements[idx]
 
-	yield:f32 = rand.float32_normal(YIELD_MEAN, YIELD_SD)
+	yield:f32 = rand.float32_normal(yield_mean, yield_sd)
 	population := f32(settlement.population)
 	farmers := population * settlement.job_allocation[.Farmer]
 	managers := population * settlement.job_allocation[.Manager]
@@ -75,11 +92,11 @@ tick_settlement_year :: proc(idx:int)
 		// TODO: managers make the distribution of surplus more effective
 		deficit := -surplus
 		deaths:f32 = 0
-		if settlement.surplus > deficit {
-			settlement.surplus -= deficit
+		if settlement.inventory[.Food] > deficit {
+			settlement.inventory[.Food] -= deficit
 		} else {
-			deaths = (deficit-settlement.surplus)
-			settlement.surplus = 0
+			deaths = (deficit-settlement.inventory[.Food])
+			settlement.inventory[.Food] = 0
 			settlement.population -= int(deaths)
 			/* TODO: Managers don't die, only farmers */
 		}
@@ -89,7 +106,7 @@ tick_settlement_year :: proc(idx:int)
 		b := max_collectable(managers)
 		collected := collection_amount(surplus, b)
 
-		settlement.surplus += collected
+		settlement.inventory[.Food] += collected
 		growth_percent := rand.float32_normal(GROWTH_RATE_MEAN, GROWTH_RATE_SD) / 100
 		net_births := population * growth_percent
 

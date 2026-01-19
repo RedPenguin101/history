@@ -158,6 +158,7 @@ main :: proc()
 			tick_settlement_year(s_idx)
 			s := global.settlements[s_idx]
 			println("At the end of year", year, "the settlement of", s.name, "had", s.population, "people")
+			println("\tFood Surplus:", s.inventory[.Food])
 		}
 		free_all(context.temp_allocator)
 	}
