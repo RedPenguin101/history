@@ -64,6 +64,9 @@ main :: proc()
 	defer {
 		vmem.arena_destroy(&string_arena)
 
+		for c in global.characters {
+			delete(c.children)
+		}
 		delete(global.characters)
 		delete(global.events)
 		delete(global.houses)
@@ -158,6 +161,7 @@ main :: proc()
 			tick_settlement_year(s_idx)
 			s := global.settlements[s_idx]
 			println("At the end of year", year, "the settlement of", s.name, "had", s.population, "people")
+			println("\tManagers", int(f32(s.population)*s.job_allocation[.Manager]))
 			println("\tFood Surplus:", s.inventory[.Food])
 		}
 		free_all(context.temp_allocator)
